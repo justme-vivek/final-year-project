@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Coverage
+coverage/
+coverage.json
+
+# TypeChain generated
+typechain/
+typechain-types/
+
+# Hardhat files
+cache/
+artifacts/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
