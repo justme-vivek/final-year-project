@@ -103,7 +103,7 @@ const UpdateProduct = () => {
     const getImage = async (imageName) => {
         setImage(prevState => ({
             ...prevState,
-            filepreview: `http://localhost:5000/file/product/${imageName}`
+            filepreview: `https://final-year-project-133i.onrender.com/file/product/${imageName}`
             })
         )
     }
@@ -121,7 +121,7 @@ const UpdateProduct = () => {
         // 1) Try fetching from backend server first
         let serverDataLoaded = false;
         try {
-            const res = await axios.get(`http://localhost:5000/product/${serial}`);
+            const res = await axios.get(`https://final-year-project-133i.onrender.com/product/${serial}`);
             if (res.data && res.data.name) {
                 setName(res.data.name || "");
                 setBrand(res.data.brand || "");
@@ -152,7 +152,7 @@ const UpdateProduct = () => {
                 }
             }
 
-            // Parse blockchain history — deployed struct: id, actor, location, timestamp (string), isSold
+            // Parse blockchain history â€” deployed struct: id, actor, location, timestamp (string), isSold
             const rawHistory = product[5] || [];
             const hist = [];
             let lastIsSold = false;

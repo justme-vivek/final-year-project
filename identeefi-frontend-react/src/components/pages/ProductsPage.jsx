@@ -21,7 +21,7 @@ const columns = [
         flex: 0.9,
         minWidth: 100,
         valueFormatter: (params) => {
-            if (!params.value) return '—';
+            if (!params.value) return 'â€”';
             const ts = parseInt(params.value);
             if (isNaN(ts)) return params.value;
             return new Date(ts * 1000).toLocaleDateString();
@@ -33,7 +33,7 @@ const columns = [
         flex: 1,
         minWidth: 120,
         renderCell: (params) => {
-            if (!params.value) return <span style={{ color: '#888' }}>—</span>;
+            if (!params.value) return <span style={{ color: '#888' }}>â€”</span>;
             const short = `${params.value.slice(0, 8)}...${params.value.slice(-6)}`;
             return (
                 <a
@@ -76,7 +76,7 @@ const ProductsPage = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/productAll');
+                const res = await axios.get('https://final-year-project-133i.onrender.com/productAll');
                 setProducts(res.data || []);
             } catch (err) {
                 console.error('Error fetching products:', err);
@@ -123,7 +123,7 @@ const ProductsPage = () => {
                             fontWeight: 'bold',
                         }}
                     >
-                        📦 Products
+                        ðŸ“¦ Products
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <Chip
@@ -136,7 +136,7 @@ const ProductsPage = () => {
                             sx={{ color: '#fff', borderColor: '#fff' }}
                             onClick={() => navigate(-1)}
                         >
-                            ← Back
+                            â† Back
                         </Button>
                     </Box>
                 </Box>

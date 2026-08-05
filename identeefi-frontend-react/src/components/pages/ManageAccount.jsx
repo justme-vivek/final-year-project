@@ -16,7 +16,7 @@ const ManageAccount = () => {
 
     const handleData = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/profileAll');
+            const res = await axios.get('https://final-year-project-133i.onrender.com/profileAll');
             setRows(res.data || []);
         } catch (err) {
             console.error("Failed to load accounts:", err);
@@ -26,7 +26,7 @@ const ManageAccount = () => {
     const handleDelete = async (username) => {
         if (!window.confirm(`Are you sure you want to delete user: ${username}?`)) return;
         try {
-            await axios.delete(`http://localhost:5000/profile/${username}`);
+            await axios.delete(`https://final-year-project-133i.onrender.com/profile/${username}`);
             alert("User deleted successfully!");
             handleData(); // refresh list
         } catch (err) {

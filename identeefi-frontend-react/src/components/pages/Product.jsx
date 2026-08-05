@@ -47,7 +47,7 @@ const Product = () => {
         // Fetch profiles to map actor names to roles
         const fetchProfiles = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/profileAll');
+                const res = await axios.get('https://final-year-project-133i.onrender.com/profileAll');
                 if (res.data) {
                     const profileMap = {};
                     res.data.forEach(p => {
@@ -67,7 +67,7 @@ const Product = () => {
         if (!imageName) return;
         setImage(prevState => ({
             ...prevState,
-            filepreview: `http://localhost:5000/file/product/${imageName}`
+            filepreview: `https://final-year-project-133i.onrender.com/file/product/${imageName}`
             })
         )
     }
@@ -85,7 +85,7 @@ const Product = () => {
         // 1) Fetch product metadata from backend server
         let serverDataLoaded = false;
         try {
-            const res = await axios.get(`http://localhost:5000/product/${serial}`);
+            const res = await axios.get(`https://final-year-project-133i.onrender.com/product/${serial}`);
             if (res.data && res.data.name) {
                 setName(res.data.name || "");
                 setBrand(res.data.brand || "");
@@ -116,7 +116,7 @@ const Product = () => {
                 }
             }
 
-            // Parse blockchain history — deployed struct has: id, actor, location, timestamp (string), isSold
+            // Parse blockchain history â€” deployed struct has: id, actor, location, timestamp (string), isSold
             parseAndSetHistory(product[5] || []);
         } catch (bcError) {
             console.warn("Blockchain getProduct failed:", bcError?.message);

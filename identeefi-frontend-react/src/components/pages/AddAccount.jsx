@@ -60,7 +60,7 @@ const AddAccount = () => {
       try {
         
       
-        axios.post("http://localhost:5000/upload/profile", data, {
+        axios.post("https://final-year-project-133i.onrender.com/upload/profile", data, {
             headers: { "Content-Type": "multipart/form-data" }
         }).then(res => {
             if (res.data.success === 1) {
@@ -94,7 +94,7 @@ const AddAccount = () => {
 
             if (isEditMode) {
                 if (pwd) profileData.password = pwd; // Optional password update
-                const res = await axios.put(`http://localhost:5000/profile/${user}`, profileData,
+                const res = await axios.put(`https://final-year-project-133i.onrender.com/profile/${user}`, profileData,
                     { headers: {'Content-Type': 'application/json'} }
                 );
                 if (image.file && image.file.name) {
@@ -108,9 +108,9 @@ const AddAccount = () => {
                     "password": pwd,
                     "role": role
                 });
-                const res = await axios.post('http://localhost:5000/addaccount', accountData,
+                const res = await axios.post('https://final-year-project-133i.onrender.com/addaccount', accountData,
                     { headers: {'Content-Type': 'application/json'} });
-                const res2 = await axios.post('http://localhost:5000/addprofile', profileData,
+                const res2 = await axios.post('https://final-year-project-133i.onrender.com/addprofile', profileData,
                     { headers: {'Content-Type': 'application/json'} });
                 if (image.file && image.file.name) {
                     uploadImage(image);

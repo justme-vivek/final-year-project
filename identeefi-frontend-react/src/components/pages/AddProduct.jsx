@@ -162,7 +162,7 @@ const AddProduct = () => {
     const getUsername = async (e) => {
         if (!auth?.user) return;
         try {
-            const res = await axios.get(`http://localhost:5000/profile/${auth.user}`);
+            const res = await axios.get(`https://final-year-project-133i.onrender.com/profile/${auth.user}`);
             if (res.data && res.data.length > 0) {
                 setManuName(res.data[0].name || "");
                 setDbLocation(res.data[0].location || "");
@@ -177,7 +177,7 @@ const AddProduct = () => {
         const data = new FormData();
         data.append("image", image.file);
 
-        axios.post("http://localhost:5000/upload/product", data, {
+        axios.post("https://final-year-project-133i.onrender.com/upload/product", data, {
             headers: { "Content-Type": "multipart/form-data" }
         }).then(res => {
             if (res.data.success === 1) {
@@ -205,7 +205,7 @@ const AddProduct = () => {
             return `https://aquamarine-accessible-takin-121.mypinata.cloud/ipfs/${resFile.data.IpfsHash}`;
         } catch (error) {
             console.warn("Image IPFS upload skipped (no API key or network error):", error.message);
-            return null; // graceful fallback — don't throw
+            return null; // graceful fallback â€” don't throw
         }
     }
 
@@ -243,7 +243,7 @@ const AddProduct = () => {
         e.preventDefault();
 
         try {
-            // MetaMask is required — no alternative path
+            // MetaMask is required â€” no alternative path
             if (!window.ethereum) {
                 alert("MetaMask is required to register products on the blockchain. Please install MetaMask.");
                 setLoading("");
@@ -258,7 +258,7 @@ const AddProduct = () => {
             const web3 = new Web3(window.ethereum);
             const productContract = new web3.eth.Contract(contractABI, CONTRACT_ADDRESS);
 
-            // Upload image to IPFS (optional — skipped if no API key)
+            // Upload image to IPFS (optional â€” skipped if no API key)
             setLoading("Uploading image to IPFS...");
             const imageUrl = await uploadImageToIPFS(image.file);
             // Upload metadata to IPFS
@@ -361,7 +361,7 @@ const AddProduct = () => {
     // Save full product data to MongoDB
     const addProductDB = async (productData) => {
         try {
-            const res = await axios.post('http://localhost:5000/addproduct',
+            const res = await axios.post('https://final-year-project-133i.onrender.com/addproduct',
                 JSON.stringify(productData),
                 { headers: { 'Content-Type': 'application/json' } }
             );
@@ -373,7 +373,7 @@ const AddProduct = () => {
     // Returns true if serial number is unique, false otherwise
     const checkUnique = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/products/serialNumbers");
+            const res = await axios.get("https://final-year-project-133i.onrender.com/products/serialNumbers");
             if (res.data && Array.isArray(res.data)) {
                 const existingSerialNumbers = res.data.map((product) => product.serialnumber);
                 const duplicates = existingSerialNumbers.filter((item) => item === serialNumber);
@@ -396,7 +396,7 @@ const AddProduct = () => {
         // Snapshot serial number to avoid stale closure issues
         const snapshotSerial = serialNumber;
 
-        // Use returned value — avoids React stale state closure bug
+        // Use returned value â€” avoids React stale state closure bug
         const unique = await checkUnique();
         if (unique) {
             if (image.file?.name) uploadImage(image);

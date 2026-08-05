@@ -135,7 +135,7 @@ const UpdateProductDetails = () => {
     const getUsername = async (e) => {
         if (!auth?.user) return;
         try {
-            const res = await axios.get(`http://localhost:5000/profile/${auth.user}`);
+            const res = await axios.get(`https://final-year-project-133i.onrender.com/profile/${auth.user}`);
             if (res.data && res.data.length > 0) {
                 setCurrName(res.data[0].name || "");
                 setDbLocation(res.data[0].location || "");
