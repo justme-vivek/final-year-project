@@ -21,7 +21,7 @@ const columns = [
         flex: 0.9,
         minWidth: 100,
         valueFormatter: (params) => {
-            if (!params.value) return 'â€”';
+            if (!params.value) return '—';
             const ts = parseInt(params.value);
             if (isNaN(ts)) return params.value;
             return new Date(ts * 1000).toLocaleDateString();
@@ -33,7 +33,7 @@ const columns = [
         flex: 1,
         minWidth: 120,
         renderCell: (params) => {
-            if (!params.value) return <span style={{ color: '#888' }}>â€”</span>;
+            if (!params.value) return <span style={{ color: '#888' }}>—</span>;
             const short = `${params.value.slice(0, 8)}...${params.value.slice(-6)}`;
             return (
                 <a

@@ -152,7 +152,7 @@ const UpdateProduct = () => {
                 }
             }
 
-            // Parse blockchain history â€” deployed struct: id, actor, location, timestamp (string), isSold
+            // Parse blockchain history — deployed struct: id, actor, location, timestamp (string), isSold
             const rawHistory = product[5] || [];
             const hist = [];
             let lastIsSold = false;

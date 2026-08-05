@@ -53,7 +53,7 @@ const ScannerPage = () => {
 
             // If not in DB, we can't reliably check blockchain because getProduct reverts
             // for valid products due to the expire_timestamp bug in the contract.
-            // Return false â€” only DB-registered products are treated as genuine.
+            // Return false — only DB-registered products are treated as genuine.
             return false;
         };
 
@@ -92,7 +92,7 @@ const ScannerPage = () => {
     }
 
     const navProduct = () => {
-        // Navigate directly to product page â€” no wallet gate needed for viewing
+        // Navigate directly to product page — no wallet gate needed for viewing
         navigate('/product', { state: { qrData }});
     }
 
@@ -133,7 +133,7 @@ const ScannerPage = () => {
                     <QrScanner passData={passData}/>
 
                     <Typography variant="body2" sx={{ my: 2, color: "#555", fontWeight: 600 }}>
-                        â€” OR ENTER PRODUCT SERIAL NUMBER / QR CODE â€”
+                        — OR ENTER PRODUCT SERIAL NUMBER / QR CODE —
                     </Typography>
                     <form onSubmit={handleManualSubmit}>
                         <TextField

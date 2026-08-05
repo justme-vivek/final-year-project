@@ -116,7 +116,7 @@ const Product = () => {
                 }
             }
 
-            // Parse blockchain history â€” deployed struct has: id, actor, location, timestamp (string), isSold
+            // Parse blockchain history — deployed struct has: id, actor, location, timestamp (string), isSold
             parseAndSetHistory(product[5] || []);
         } catch (bcError) {
             console.warn("Blockchain getProduct failed:", bcError?.message);

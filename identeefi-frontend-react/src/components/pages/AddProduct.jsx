@@ -205,7 +205,7 @@ const AddProduct = () => {
             return `https://aquamarine-accessible-takin-121.mypinata.cloud/ipfs/${resFile.data.IpfsHash}`;
         } catch (error) {
             console.warn("Image IPFS upload skipped (no API key or network error):", error.message);
-            return null; // graceful fallback â€” don't throw
+            return null; // graceful fallback — don't throw
         }
     }
 
@@ -243,7 +243,7 @@ const AddProduct = () => {
         e.preventDefault();
 
         try {
-            // MetaMask is required â€” no alternative path
+            // MetaMask is required — no alternative path
             if (!window.ethereum) {
                 alert("MetaMask is required to register products on the blockchain. Please install MetaMask.");
                 setLoading("");
@@ -258,7 +258,7 @@ const AddProduct = () => {
             const web3 = new Web3(window.ethereum);
             const productContract = new web3.eth.Contract(contractABI, CONTRACT_ADDRESS);
 
-            // Upload image to IPFS (optional â€” skipped if no API key)
+            // Upload image to IPFS (optional — skipped if no API key)
             setLoading("Uploading image to IPFS...");
             const imageUrl = await uploadImageToIPFS(image.file);
             // Upload metadata to IPFS
@@ -396,7 +396,7 @@ const AddProduct = () => {
         // Snapshot serial number to avoid stale closure issues
         const snapshotSerial = serialNumber;
 
-        // Use returned value â€” avoids React stale state closure bug
+        // Use returned value — avoids React stale state closure bug
         const unique = await checkUnique();
         if (unique) {
             if (image.file?.name) uploadImage(image);
