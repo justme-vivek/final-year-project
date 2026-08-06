@@ -65,7 +65,7 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "craco start",
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject"
