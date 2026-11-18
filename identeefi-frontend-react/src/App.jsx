@@ -1,38 +1,48 @@
+import React, { Suspense, lazy } from 'react';
 import Home from './components/home/Home';
 import Login from './components/home/Login';
+import Terms from './components/pages/Terms';
+import Privacy from './components/pages/Privacy';
 import ScannerPage from './components/pages/ScannerPage';
-import Admin from './components/pages/Admin';
-import Manufacturer from './components/pages/Manufacturer';
-import Supplier from './components/pages/Supplier';
-import Retailer from './components/pages/Retailer';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import RequireAuth from './components/RequireAuth';
 import Layout from './components/Layout';
-import AddAccount from './components/pages/AddAccount';
-import ManageAccount from './components/pages/ManageAccount';
-import AddProduct from './components/pages/AddProduct';
-import Profile from './components/pages/Profile';
-import UpdateProduct from './components/pages/UpdateProduct';
-import Product from './components/pages/Product';
-import AuthenticProduct from './components/pages/AuthenticProduct';
-import FakeProduct from './components/pages/FakeProduct';
-import UpdateProductDetails from './components/pages/UpdateProductDetails';
-import ProductsPage from './components/pages/ProductsPage';
-import WalletButtons from './components/WalletButtons/index';
-import WalletTest from "./components/pages/WalletConnect";
-import  NetworkCheck  from './components/pages/NetworkCheck';
-import Router from './components/Router';
+import { Box, CircularProgress } from '@mui/material';
+
+const Admin = lazy(() => import('./components/pages/Admin'));
+const Manufacturer = lazy(() => import('./components/pages/Manufacturer'));
+const Supplier = lazy(() => import('./components/pages/Supplier'));
+const Retailer = lazy(() => import('./components/pages/Retailer'));
+const AddAccount = lazy(() => import('./components/pages/AddAccount'));
+const ManageAccount = lazy(() => import('./components/pages/ManageAccount'));
+const AddProduct = lazy(() => import('./components/pages/AddProduct'));
+const Profile = lazy(() => import('./components/pages/Profile'));
+const UpdateProduct = lazy(() => import('./components/pages/UpdateProduct'));
+const Product = lazy(() => import('./components/pages/Product'));
+const AuthenticProduct = lazy(() => import('./components/pages/AuthenticProduct'));
+const FakeProduct = lazy(() => import('./components/pages/FakeProduct'));
+const UpdateProductDetails = lazy(() => import('./components/pages/UpdateProductDetails'));
+const ProductsPage = lazy(() => import('./components/pages/ProductsPage'));
+const WalletButtons = lazy(() => import('./components/WalletButtons/index'));
+const WalletTest = lazy(() => import('./components/pages/WalletConnect'));
+
+const RouteLoader = () => (
+  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
+    <CircularProgress size={20} sx={{ color: '#6D4AFF' }} />
+  </Box>
+);
 function App() {
 
   return (
-    // <NetworkCheck >
-
+    <Suspense fallback={<RouteLoader />}>
     <Routes>
       <Route path='/' element={<Layout />}>
 
         {/* public routes */}
         <Route exact path='/' element={< Home />}></Route>
         <Route exact path='/login' element={< Login />}></Route>
+        <Route exact path='/terms' element={< Terms />}></Route>
+        <Route exact path='/privacy' element={< Privacy />}></Route>
         <Route exact path='/scanner' element={< ScannerPage />}></Route>
         <Route exact path='/product' element={< Product />}></Route>
         <Route exact path='/authentic-product' element={< AuthenticProduct />}></Route>
@@ -77,7 +87,7 @@ function App() {
 
       </Route>
     </Routes>
-//  </NetworkCheck>
+    </Suspense>
 
   );
 }

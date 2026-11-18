@@ -1,227 +1,198 @@
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Container from "@mui/material/Container";
-import heroBg from "../../img/herobg.png";
+import React, { useRef, useState, useEffect } from 'react';
+import { Box, Typography, Button, TextField, Grid, CircularProgress, Container, Checkbox, FormControlLabel } from "@mui/material";
+import { CheckCircle, AlertTriangle, ArrowLeft } from "lucide-react";
 import axios from '../../api/axios';
 import useAuth from '../../hooks/useAuth';
-import { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate, Link } from 'react-router-dom';
+import { motion } from "framer-motion";
 
 const LOGIN_URL = '/auth';
 
 export default function Login() {
-    const { setAuth } = useAuth();
-    const navigate = useNavigate();
+  const { setAuth } = useAuth();
+  const navigate = useNavigate();
+  const errRef = useRef();
 
-    const errRef = useRef();
+  const [user, setUser] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [errMsg, setErrMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-    const [user, setUser] = useState('');
-    const [pwd, setPwd] = useState('');
-    const [errMsg, setErrMsg] = useState('');
+  useEffect(() => {
+    setErrMsg('');
+  }, [user, pwd]);
 
-    const handleBack = () => {
-        navigate('/');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const res = await axios.post(`${LOGIN_URL}/${user}/${pwd}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res?.data.length === 0) {
+        setErrMsg('Login Failed. Please try again later.');
+      } else {
+        const role = res?.data[0].role;
+        setAuth({ user, pwd, role });
+        setUser('');
+        setPwd('');
+        navigate(`/${role}`, { replace: true });
+      }
+    } catch (err) {
+      if (!err?.response) {
+        setErrMsg('Server is down. Please try again later.');
+      } else if (err.response?.status === 400) {
+        setErrMsg('Invalid username or password.');
+      } else if (err.response?.status === 401) {
+        setErrMsg('Unauthorized access.');
+      } else {
+        setErrMsg('Login Failed. Please try again later.');
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    useEffect(() => {
-        setErrMsg('');
-    }, [user, pwd]);
+  const textFieldStyles = {
+    "& .MuiOutlinedInput-root": {
+      color: "#F2F0F8",
+      backgroundColor: "#15151D",
+      borderRadius: "10px",
+      "& fieldset": { borderColor: "rgba(255,255,255,0.10)" },
+      "&:hover fieldset": { borderColor: "rgba(109,74,255,0.45)" },
+      "&.Mui-focused fieldset": {
+        borderColor: "#6D4AFF",
+        boxShadow: "0 0 12px rgba(109,74,255,0.2)",
+      },
+    },
+    "& .MuiInputLabel-root": { color: "#706C7A" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "#6D4AFF" },
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        try {
-            const res = await axios.post(`${LOGIN_URL}/${user}/${pwd}`,
-                {
-                    headers: { 'Content-Type': 'application/json' },
-                });
-            if (res?.data.length === 0) {
-                setErrMsg('Login Failed. Please try again later.');
-                // errRef.current.focus();
-            } else {
-                const role = res?.data[0].role;
-                setAuth({ user, pwd, role })
-                setUser('');
-                setPwd('');
-                navigate(`/${role}`, { replace: true });
-
-            }
-        } catch (err) {
-            if (!err?.response) {
-                setErrMsg('Server is down. Please try again later.');
-            } else if (err.response?.status === 400) {
-                setErrMsg('Invalid username or password.');
-            } else if (err.response?.status === 401) {
-                setErrMsg('Unauthorized access.');
-            } else {
-                setErrMsg('Login Failed. Please try again later.');
-            }
-            errRef.current?.focus();
-        }
-    };
-
-    return (
-        <Box sx={{
-            backgroundImage: `url(${heroBg})`,
-            minHeight: "100vh",
-            backgroundRepeat: "no-repeat",
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            zIndex: -2,
+  return (
+    <Box sx={{ minHeight: "100vh", bgcolor: "#050507", fontFamily: "'Manrope', sans-serif" }}>
+      <Grid container sx={{ minHeight: "100vh" }}>
+        
+        {/* Left Side: Product Story */}
+        <Grid item xs={12} md={5} lg={6} sx={{
+          display: { xs: "none", md: "flex" },
+          flexDirection: "column",
+          justifyContent: "center",
+          p: 8,
+          bgcolor: "#0A0A0F",
+          borderRight: "1px solid rgba(255,255,255,0.10)",
         }}>
+          <Typography sx={{ color: "#6D4AFF", fontSize: "14px", fontWeight: 700, letterSpacing: "2px", mb: 2, textTransform: "uppercase" }}>
+            AuthentiScan
+          </Typography>
+          <Typography variant="h3" sx={{ color: "#F2F0F8", fontWeight: 700, mb: 2 }}>
+            Blockchain-powered product authentication.
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 6 }}>
+            {["Immutable product records", "QR-based verification", "Supply-chain traceability", "Smart-contract verification"].map((item, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <CheckCircle size={20} color="#6D4AFF" />
+                <Typography sx={{ color: "#A5A1B2", fontSize: "18px" }}>{item}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </Grid>
 
-            <Container component="main" maxWidth="sm">
-                <Box
-                    sx={{
-                        boxShadow: 3,
-                        borderRadius: 2,
-                        px: 4,
-                        py: 6,
-                        marginTop: 8,
-                        backgroundColor: '#161232c4',
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        align: "center",
+        {/* Right Side: Login Form */}
+        <Grid item xs={12} md={7} lg={6} sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          p: { xs: 4, sm: 8, lg: 12 },
+        }}>
+          
+          <Button component={Link} to="/" sx={{ color: "#A5A1B2", alignSelf: "flex-start", mb: 4, textTransform: "none", "&:hover": { color: "#F2F0F8" } }}>
+            <ArrowLeft size={18} style={{ marginRight: 8 }} /> Back to home
+          </Button>
 
-                    }}
-                >
-                    <Typography component="h1" variant="h5" color="#fff"
-                        sx={{
-                            textAlign: "center", marginBottom: "3%", marginTop: "3%",
-                            fontFamily: 'Gambetta', fontWeight: "bold", fontSize: "2.5rem",
-                        }}
-                    >
-                        AUTHENTISCAN
-                    </Typography>
-                    <Typography component="h1" variant="h5" color="#fff">
-                        Login
-                    </Typography>
-                    {errMsg && <Typography component="h1" variant="body2" color="error" ref={errRef} sx={{marginTop: "2rem"}}>  {errMsg} </Typography>}
-                    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }} >
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            id="username"
-                            label="Username"
-                            name="username"
-                            autoFocus
-                            onChange={(e) => setUser(e.target.value)}
-                            InputLabelProps={{ style: { color: "#fff" } }} // Input label color
-                            InputProps={{ style: { color: "#fff" } }}
-                            variant="outlined"
-                            sx={{
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "#fff", // Set outline color to white
-                                  opacity: 0.5, // Set opacity for the outline
-                                },
-                                "&:hover fieldset": {
-                                  borderColor: "#fff", // Set outline color to white on hover
-                                },
-                                "&.Mui-focused fieldset": {
-                                  borderColor: "#fff", // Set outline color to white when focused
-                                },
-                              },
-                              "& .MuiInputLabel-root": {
-                                color: "#fff", // Set label color to white
-                              },
-                              "& .MuiInputBase-input": {
-                                color: "#fff", // Set text color to white
-                                opacity: 1, // Set opacity for the input text
-                              },
-                            }}
-                            
+          <Typography variant="h4" sx={{ color: "#F2F0F8", fontWeight: 700, mb: 1 }}>
+            Welcome back
+          </Typography>
+          <Typography sx={{ color: "#A5A1B2", mb: 6 }}>
+            Access your AuthentiScan workspace.
+          </Typography>
 
-
-                        />
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            name="password"
-                            label="Password"
-                            type="password"
-                            id="password"
-                            onChange={(e) => setPwd(e.target.value)}
-                            InputLabelProps={{ style: { color: "#fff" } }} // Input label color
-                            InputProps={{ style: { color: "#fff" } }}
-                            variant="outlined"
-                            sx={{
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "#fff", // Set outline color to white
-                                  opacity: 0.5, // Set opacity for the outline
-                                },
-                                "&:hover fieldset": {
-                                  borderColor: "#fff", // Set outline color to white on hover
-                                },
-                                "&.Mui-focused fieldset": {
-                                  borderColor: "#fff", // Set outline color to white when focused
-                                },
-                              },
-                              "& .MuiInputLabel-root": {
-                                color: "#fff", // Set label color to white
-                              },
-                              "& .MuiInputBase-input": {
-                                color: "#fff", // Set text color to white
-                                opacity: 1, // Set opacity for the input text
-                              },
-                            }}
-
-                        />
-                        <FormControlLabel
-                            control={<Checkbox value="remember" color="primary" />}
-                            label="Remember me"
-                            sx={{
-                                color:"#fff",
-                                "& .MuiCheckbox-root": {
-                                  color: "#fff", // Set checkbox color to white
-                                },
-                                "& .MuiIconButton-root": {
-                                  color: "#fff", // Set icon color to white
-                                },
-                            }}                
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
-                        >
-                            Login
-                        </Button>
-                        <Box
-                            sx={{
-                                width: "100%",
-                                display: "flex",
-                                justifyContent: "center",
-                            }}
-                        >
-
-
-                            <Button
-                                onClick={handleBack}
-
-                            >
-                                Back
-                            </Button>
-
-                        </Box>
-                    </Box>
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            
+            {errMsg && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 2, mb: 4, bgcolor: "rgba(224, 90, 109, 0.1)", border: "1px solid #E05A6D", borderRadius: "10px" }}>
+                  <AlertTriangle size={20} color="#E05A6D" />
+                  <Typography ref={errRef} sx={{ color: "#E05A6D", fontSize: "14px", fontWeight: 600 }}>{errMsg}</Typography>
                 </Box>
-            </Container>
-        </Box>
-    );
+              </motion.div>
+            )}
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoFocus
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              variant="outlined"
+              sx={textFieldStyles}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              variant="outlined"
+              sx={{ ...textFieldStyles, mt: 3 }}
+            />
+
+            <FormControlLabel
+              control={<Checkbox color="primary" sx={{ color: "rgba(255,255,255,0.3)", "&.Mui-checked": { color: "#6D4AFF" } }} />}
+              label={<Typography sx={{ color: "#A5A1B2", fontSize: "14px" }}>Remember me</Typography>}
+              sx={{ mt: 2, mb: 4 }}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              disabled={isLoading}
+              sx={{
+                bgcolor: "#6D4AFF",
+                color: "#F2F0F8",
+                py: 1.5,
+                borderRadius: "10px",
+                fontWeight: 600,
+                fontSize: "16px",
+                textTransform: "none",
+                display: "flex",
+                gap: 1.5,
+                "&:hover": { bgcolor: "#4F23F8" },
+                "&:disabled": { bgcolor: "#3A2A85", color: "rgba(255,255,255,0.5)" }
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <CircularProgress size={20} sx={{ color: "#F2F0F8" }} />
+                  Authenticating...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 }

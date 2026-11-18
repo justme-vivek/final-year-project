@@ -11,11 +11,7 @@ export enum SupportedWallets {
 
 export enum ConnectionType {
   INJECTED = 'INJECTED',
-  //   COINBASE_WALLET = 'COINBASE_WALLET',
   WALLET_CONNECT = 'WALLET_CONNECT',
-  //   FORTMATIC = 'FORTMATIC',
-  //   NETWORK = 'NETWORK',
-  //   GNOSIS_SAFE = 'GNOSIS_SAFE',
 }
 
 export interface Connection {
@@ -60,12 +56,8 @@ export const walletConnectConnection: Connection = {
 // ? WALLETCONNECT CONNECTION
 
 const CONNECTIONS = [
-  //   gnosisSafeConnection,
   injectedConnection,
-  //   coinbaseWalletConnection,
   walletConnectConnection,
-  //   fortmaticConnection,
-  //   networkConnection,
 ]
 
 export function getConnection(c: Connector | ConnectionType) {
@@ -81,16 +73,8 @@ export function getConnection(c: Connector | ConnectionType) {
     switch (c) {
       case ConnectionType.INJECTED:
         return injectedConnection
-      //   case ConnectionType.COINBASE_WALLET:
-      //     return coinbaseWalletConnection
       case ConnectionType.WALLET_CONNECT:
         return walletConnectConnection
-      //   case ConnectionType.FORTMATIC:
-      //     return fortmaticConnection
-      //   case ConnectionType.NETWORK:
-      //     return networkConnection
-      //   case ConnectionType.GNOSIS_SAFE:
-      //     return gnosisSafeConnection
     }
   }
 }
@@ -98,13 +82,7 @@ export function getConnectionName(connectionType: ConnectionType) {
   switch (connectionType) {
     case ConnectionType.INJECTED:
       return 'MetaMask'
-    // case ConnectionType.COINBASE_WALLET:
-    //   return 'Coinbase Wallet'
     case ConnectionType.WALLET_CONNECT:
       return 'WalletConnect'
-    // case ConnectionType.NETWORK:
-    //   return 'Network'
-    // case ConnectionType.GNOSIS_SAFE:
-    //   return 'Gnosis Safe'
   }
 }

@@ -5,9 +5,7 @@ import { Grid, styled } from '@mui/material'
   alignItems: 'center',
   justifyContent: 'space-between',
   background: 'transparent',
-  // borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
   height: 'auto',
-  // boxShadow: '-1px 12px 11px 0px rgba(0,0,0,0.34)',
   [theme.breakpoints.down('md')]: {
     flexDirection: 'row',
     height: 'auto', // Adjust height as per requirement
@@ -34,5 +32,4 @@ import { Grid, styled } from '@mui/material'
     // Adjust height as per requirement
   },
 }))
-// export default {Container, LogoContainer};
 export default ButtonContainer;

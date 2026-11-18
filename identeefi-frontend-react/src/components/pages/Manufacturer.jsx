@@ -10,7 +10,6 @@ import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import useAuth from '../../hooks/useAuth';
-// import { useDisconnect } from 'wagmi';
 const projectId = '7236c984a38479e85f91b945bd9076a8';
 if (!projectId) {
   throw new Error("Please provide project id");
@@ -81,7 +80,6 @@ const findMetaMaskAccount = async () => {
 
 const Manufacturer = () => {
   const [currentAccount, setCurrentAccount] = useState('');
-  // const {disconnect} = useDisconnect();
   const { open } = useWeb3Modal();
   const { isConnected, address ,isConnecting} = useAccount({ config });
   const navigate = useNavigate();
@@ -118,18 +116,6 @@ const Manufacturer = () => {
     navigate('/login');
   };
 
-  
-  useEffect(() => {
-    // console.log("open",open);
-  }, [isConnected,isConnecting]);
-    useEffect(() => {
-    console.log('open function:', open); // Log the open function
-  }, [open]);
-
-  // const handleDisconnect = () => {
-  //   disconnect();
-  //   setCurrentAccount(''); // Clear the current account state
-  // };
   useEffect(() => {
     findMetaMaskAccount().then((account) => {
       if (account !== null) {
@@ -210,13 +196,11 @@ const Manufacturer = () => {
         </Box>
         <h2>Welcome:</h2>
         <h1>Manufacturer</h1>
-        {/* <Link to={isConnected ? "/profile": "#"}> */}
         <div>
 
           <Button className="btns" buttonStyle='btn--long' buttonSize='btn--large'disabled={!connected} onClick={handleProfileClick}
           >Check Profile</Button>
           </div>
-        {/* </Link> */}
         <div>
           <Button className="btns" buttonStyle='btn--long' buttonSize='btn--large' disabled={!connected} onClick={handleAddProductClick}>Add Product</Button>
         </div>

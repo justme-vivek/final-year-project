@@ -13,8 +13,6 @@ import Geocode from "react-geocode";
 import { color } from '@mui/system';
 import WalletConnect from './WalletConnect';
 
-// import pinataSDK  from "@pinata/sdk";
-
 const getEthereumObject = () => window.ethereum;
 const explorerBaseUrl = 'https://sepolia.etherscan.io/tx/';
 /*

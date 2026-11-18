@@ -1,0 +1,25 @@
+/* Scan theater motion. Borders and transforms only. No shadows, no neon. */
+.scan-theater { position: relative; overflow: hidden; }
+.scan-line {
+  position: absolute; left: 0.75rem; right: 0.75rem; height: 0.125rem;
+  background: #6D4AFF; opacity: 0.9;
+  animation: scan-sweep 2.4s ease-in-out infinite;
+}
+@keyframes scan-sweep {
+  0% { top: 8%; opacity: 0; }
+  12% { opacity: 1; }
+  50% { top: 88%; opacity: 1; }
+  88% { opacity: 1; }
+  100% { top: 8%; opacity: 0; }
+}
+.scan-grid-cell { width: 0.625rem; height: 0.625rem; border-radius: 0.125rem; }
+.scan-corner { position: absolute; width: 1.625rem; height: 1.625rem; border-color: rgba(109,74,255,0.65); }
+.scan-corner.tl { top: 0.625rem; left: 0.625rem; border-top: 0.125rem solid; border-left: 0.125rem solid; border-color: rgba(109,74,255,0.65); border-top-left-radius: 0.5rem; }
+.scan-corner.tr { top: 0.625rem; right: 0.625rem; border-top: 0.125rem solid; border-right: 0.125rem solid; border-color: rgba(109,74,255,0.65); border-top-right-radius: 0.5rem; }
+.scan-corner.bl { bottom: 0.625rem; left: 0.625rem; border-bottom: 0.125rem solid; border-left: 0.125rem solid; border-color: rgba(109,74,255,0.65); border-bottom-left-radius: 0.5rem; }
+.scan-corner.br { bottom: 0.625rem; right: 0.625rem; border-bottom: 0.125rem solid; border-right: 0.125rem solid; border-color: rgba(109,74,255,0.65); border-bottom-right-radius: 0.5rem; }
+.scan-pulse-dot { animation: scan-pulse 2s ease-in-out infinite; }
+@keyframes scan-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  .scan-line, .scan-pulse-dot { animation: none; }
+}

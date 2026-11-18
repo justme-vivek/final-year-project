@@ -1,29 +1,36 @@
-import { Box, Paper, Avatar, Typography, Button, TextField } from '@mui/material';
-import heroBg from "../../img/herobg.png";
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, Button, TextField, Container, CircularProgress } from '@mui/material';
+import { ArrowLeft, Scan, Link as LinkIcon } from 'lucide-react';
 import QrScanner from '../QrScanner';
-import { useEffect, useState } from 'react';
 import useAuth from '../../hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { motion } from "framer-motion";
 
 const ScannerPage = () => {
     const CONTRACT_ADDRESS = '0x62081f016446585cCC507528cc785980296b4Ccd';
     const [qrData, setQrData] = useState('');
     const [manualInput, setManualInput] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
 
     const { auth } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     
     const passData = (data) => {
-        if (data) {
+        if (data && !isVerifying) {
             setQrData(data);
         }
     };
 
+    useEffect(() => {
+        const incoming = location.state?.serial;
+        if (incoming && !manualInput) setManualInput(incoming);
+    }, [location.state]);
+
     const handleManualSubmit = (e) => {
         e.preventDefault();
-        if (!manualInput.trim()) return;
+        if (!manualInput.trim() || isVerifying) return;
         let formattedData = manualInput.trim();
         if (!formattedData.includes(',')) {
             formattedData = `${CONTRACT_ADDRESS},${formattedData}`;
@@ -33,11 +40,13 @@ const ScannerPage = () => {
 
     useEffect(() => {
         if (!qrData) return;
+        
+        setIsVerifying(true);
+
         const verifyProductExists = async (serial) => {
             if (!serial || !serial.toString().trim()) return false;
             const cleanSerial = serial.toString().trim();
 
-            // Check MongoDB for this serial number
             try {
                 const res = await axios.get('https://final-year-project-133i.onrender.com/products/serialNumbers');
                 const list = res.data || [];
@@ -50,10 +59,6 @@ const ScannerPage = () => {
             } catch (dbErr) {
                 console.warn("Could not query DB for serial numbers:", dbErr);
             }
-
-            // If not in DB, we can't reliably check blockchain because getProduct reverts
-            // for valid products due to the expire_timestamp bug in the contract.
-            // Return false — only DB-registered products are treated as genuine.
             return false;
         };
 
@@ -63,116 +68,162 @@ const ScannerPage = () => {
             const serial = hasComma ? qrData.split(",")[1]?.trim() : qrData.trim();
 
             if (!contractAddress || contractAddress.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase() || !serial) {
-                navFakeProduct();
+                setTimeout(() => navFakeProduct(), 1500); // Artificial delay to show verifying state
                 return;
             }
 
             const exists = await verifyProductExists(serial);
             if (!exists) {
                 console.warn("Product not found in DB! Redirecting to fake-product.");
-                navFakeProduct();
+                setTimeout(() => navFakeProduct(), 1500);
                 return;
             }
 
-            // If this is an update action from a logged-in supplier/retailer, go to update flow
             const isUpdateAction = location.state?.action === 'update';
-            if (isUpdateAction && auth?.user && (auth?.role === "supplier" || auth?.role === "retailer")) {
-                navRole();
-            } else {
-                // For everyone else (public users, logged-in users just scanning), go straight to product details
-                navProduct();
-            }
+            
+            setTimeout(() => {
+                if (isUpdateAction && auth?.user && (auth?.role === "supplier" || auth?.role === "retailer")) {
+                    navRole();
+                } else {
+                    navProduct();
+                }
+            }, 1500);
         };
 
         verifyAndNavigate();
     }, [qrData]);
 
-    const navRole = () => {
-        navigate('/update-product', { state: { qrData }});
-    }
+    const navRole = () => navigate('/update-product', { state: { qrData }});
+    const navProduct = () => navigate('/product', { state: { qrData }});
+    const navFakeProduct = () => navigate('/fake-product');
+    const handleBack = () => navigate(-1);
 
-    const navProduct = () => {
-        // Navigate directly to product page — no wallet gate needed for viewing
-        navigate('/product', { state: { qrData }});
-    }
-
-    const navFakeProduct = () => {
-        navigate('/fake-product');
-    }
-
-    const handleBack = () => {
-        navigate(-1)
-    }
+    const textFieldStyles = {
+        "& .MuiOutlinedInput-root": {
+            color: "#F2F0F8",
+            backgroundColor: "#15151D",
+            borderRadius: "10px",
+            "& fieldset": { borderColor: "rgba(255,255,255,0.10)" },
+            "&:hover fieldset": { borderColor: "rgba(109,74,255,0.45)" },
+            "&.Mui-focused fieldset": {
+                borderColor: "#6D4AFF",
+                boxShadow: "0 0 12px rgba(109,74,255,0.2)",
+            },
+        },
+        "& .MuiInputLabel-root": { color: "#706C7A" },
+        "& .MuiInputLabel-root.Mui-focused": { color: "#6D4AFF" },
+        "& input::placeholder": { color: "#706C7A", opacity: 0.8 },
+    };
 
     return (
         <Box sx={{
-            backgroundImage: `url(${heroBg})`,
-            minHeight: "80vh",
-            backgroundRepeat: "no-repeat",
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundSize: 'cover',
-            zIndex: -2,
-            overflowY: "scroll"
+            minHeight: "100vh",
+            bgcolor: "#050507",
+            fontFamily: "'Manrope', sans-serif",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            py: 8,
+            px: 2
         }}>
-            <Paper elevation={3} sx={{ width: "420px", margin: "auto", marginTop: "8%", marginBottom: "10%", padding: "3%", backgroundColor: "#e3eefc" }}>
-                <Box sx={{ textAlign: "center", marginBottom: "5%" }}>
-                    <Typography
-                        variant="h2"
-                        sx={{
-                            textAlign: "center", marginBottom: "3%",
-                            fontFamily: 'Gambetta', fontWeight: "bold", fontSize: "2.3rem"
-                        }}
-                    >
-                        Scan QR Code
-                    </Typography>
+            <Container maxWidth="sm">
+                <Button 
+                    onClick={handleBack} 
+                    sx={{ color: "#A5A1B2", mb: 4, textTransform: "none", "&:hover": { color: "#F2F0F8" } }}
+                >
+                    <ArrowLeft size={18} style={{ marginRight: 8 }} /> Back
+                </Button>
 
-                    <QrScanner passData={passData}/>
+                <Box
+                    sx={{
+                        bgcolor: "#101016",
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        borderRadius: "24px",
+                        p: { xs: 4, sm: 6 },
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        position: "relative",
+                        overflow: "hidden"
+                    }}
+                >
+                    {isVerifying ? (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 0" }}>
+                            <CircularProgress size={60} sx={{ color: "#6D4AFF", mb: 4 }} />
+                            <Typography variant="h5" sx={{ color: "#F2F0F8", fontWeight: 600, mb: 1 }}>
+                                Verifying Blockchain Record
+                            </Typography>
+                            <Typography sx={{ color: "#A5A1B2" }}>
+                                Securely checking the ledger...
+                            </Typography>
+                        </motion.div>
+                    ) : (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            <Box sx={{ p: 2, bgcolor: "rgba(109,74,255,0.1)", borderRadius: "50%", mb: 3 }}>
+                                <Scan size={32} color="#6D4AFF" />
+                            </Box>
+                            
+                            <Typography variant="h4" sx={{ color: "#F2F0F8", fontWeight: 700, mb: 1 }}>
+                                Scan QR Code
+                            </Typography>
+                            <Typography sx={{ color: "#A5A1B2", textAlign: "center", mb: 5 }}>
+                                Position the product's QR code in the frame to verify its authenticity.
+                            </Typography>
 
-                    <Typography variant="body2" sx={{ my: 2, color: "#555", fontWeight: 600 }}>
-                        — OR ENTER PRODUCT SERIAL NUMBER / QR CODE —
-                    </Typography>
-                    <form onSubmit={handleManualSubmit}>
-                        <TextField
-                            fullWidth
-                            size="small"
-                            variant="outlined"
-                            placeholder="e.g. SN-WEB3-001"
-                            value={manualInput}
-                            onChange={(e) => setManualInput(e.target.value)}
-                            sx={{ mb: 1, backgroundColor: "#fff" }}
-                        />
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            fullWidth
-                            sx={{
-                                backgroundColor: "#0F1B4C",
-                                color: "#fff",
-                                py: 1,
-                                fontWeight: 600,
-                                "&:hover": { backgroundColor: "#1c2b6b" }
-                            }}
-                        >
-                            Verify Product
-                        </Button>
-                    </form>
+                            <Box sx={{ 
+                                width: "100%", 
+                                maxWidth: "300px", 
+                                borderRadius: "16px", 
+                                overflow: "hidden", 
+                                border: "2px solid rgba(109,74,255,0.45)",
+                                mb: 5
+                            }}>
+                                <QrScanner passData={passData} />
+                            </Box>
 
-                    <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
-                        <Button
-                            onClick={handleBack}
-                            sx={{ marginTop: "4%" }}
-                        >
-                            Back
-                        </Button>
-                    </Box>    
+                            <Box sx={{ width: "100%", display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+                                <Box sx={{ flex: 1, height: "1px", bgcolor: "rgba(255,255,255,0.10)" }} />
+                                <Typography sx={{ color: "#706C7A", fontSize: "12px", fontWeight: 600, letterSpacing: "1px" }}>OR ENTER MANUALLY</Typography>
+                                <Box sx={{ flex: 1, height: "1px", bgcolor: "rgba(255,255,255,0.10)" }} />
+                            </Box>
+
+                            <Box component="form" onSubmit={handleManualSubmit} sx={{ width: "100%" }}>
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder="Enter Serial Number (e.g. SN-WEB3-001)"
+                                    value={manualInput}
+                                    onChange={(e) => setManualInput(e.target.value)}
+                                    sx={{ ...textFieldStyles, mb: 2 }}
+                                />
+                                <Button
+                                    type="submit"
+                                    fullWidth
+                                    sx={{
+                                        bgcolor: "#6D4AFF",
+                                        color: "#F2F0F8",
+                                        py: 1.5,
+                                        borderRadius: "10px",
+                                        fontWeight: 600,
+                                        fontSize: "16px",
+                                        textTransform: "none",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        gap: 1.5,
+                                        "&:hover": { bgcolor: "#4F23F8" },
+                                    }}
+                                >
+                                    <LinkIcon size={18} />
+                                    Verify Manual Input
+                                </Button>
+                            </Box>
+                        </motion.div>
+                    )}
                 </Box>
-            </Paper>
+            </Container>
         </Box>
-    )
-}
+    );
+};
 
 export default ScannerPage;

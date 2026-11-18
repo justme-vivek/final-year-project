@@ -7,18 +7,5 @@ export default () => {
     timeout: 100000,
   })
 
-  // axiosInstance.interceptors.request.use(
-  //   config => {
-  //     console.log('signature -', signature)
-
-  //     if (signature && config.headers) {
-  //       config.headers['x-vrs-signature'] = signature
-  //     }
-
-  //     return config
-  //   },
-  //   error => Promise.reject(error),
-  // )
-
   return axiosInstance
 }

@@ -162,9 +162,6 @@ const Supplier = () => {
                     <Button className="btns" buttonStyle='btn--long' buttonSize='btn--large' onClick={handleProductsClick}>View Products</Button>
                   </div>
                <WalletConnect onClick={connectWallet}/>
-                {/* {!currentAccount && (
-                    <Button className="btns" buttonStyle='btn--long' buttonSize='btn--large' onClick={connectWallet}>Connect Wallet</Button>
-                )} */}
             </div>
         </div>
     );

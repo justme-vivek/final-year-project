@@ -30,57 +30,13 @@ const vanarChain = {
   blockExplorers: {
     default: { name: 'Etherscan', url: 'https://sepolia.etherscan.io' },
   },
-  // contracts: {
-  //   ensRegistry: {
-  //     address: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
-  //   },
-  //   ensUniversalResolver: {
-  //     address: '0xE4Acdd618deED4e6d2f03b9bf62dc6118FC9A4da',
-  //     blockCreated: 16773775,
-  //   },
-  //   multicall3: {
-  //     address: '0xca11bde05977b3631167028862be2a173976ca11',
-  //     blockCreated: 14353601,
-    // },
-  // },
 }
 
-
-
-
-// const vanarChain = {
-//   id: 0x13308, // Your custom chain's ID
-//   name: 'Vanguard', // Name of your custom chain
-//   rpcUrl: {
-//     default: {
-//       http: ['https://rpc-vanguard.vanarchain.com']
-//     }
-//   }, // RPC URL of your custom chain
-//   nativeCurrency: {
-//     name: 'Vanguard',
-//     symbol: 'VG',
-//     decimals: 18
-//   },
-//   blockExplorers: {
-//     default: {
-//       name: 'Vanguard Explorer',
-//       url: 'https://explorer-vanguard.vanarchain.com',
-//       apiUrl: ''
-//     }
-//   },
-//   contracts: {
-//   multicall3: {
-//     address: '0xca11bde05977b3631167028862be2a173976ca11',
-//     blockCreated: 7654707,
-//   },
-// };
-// }
 const chains = [vanarChain, mainnet, arbitrum, bscTestnet]
 const config = defaultWagmiConfig({
   chains,
   projectId,
   metadata,
-  // ...wagmiOptions // Optional - Override createConfig parameters
 })
 // 3. Create modal
 createWeb3Modal({

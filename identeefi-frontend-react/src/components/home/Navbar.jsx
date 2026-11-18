@@ -1,171 +1,70 @@
 import * as React from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import MenuIcon from "@mui/icons-material/Menu";
-import FeaturedPlayListIcon from "@mui/icons-material/FeaturedPlayList";
-import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import HomeIcon from "@mui/icons-material/Home";
-import ContactsIcon from "@mui/icons-material/Contacts";
-import logoImg from "../../img/logo.png";
-import { Container } from "@mui/system";
-import CustomButton from "./CustomButton";
-import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  styled,
-} from "@mui/material";
-import { useState } from "react";
-import { LinkOffTwoTone } from "@mui/icons-material";
-import { Link } from "react-router-dom";
-
+import { Box, Button, Container, Drawer, Typography } from "@mui/material";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X, Scan } from "lucide-react";
+import { Magnetic } from "../ui/Magnetic";
+import { motion, useScroll, useSpring } from "framer-motion";
+const links = [
+  { label: "Verify", href: "/#verify" },
+  { label: "How it works", href: "/#how" },
+  { label: "Records", href: "/#records" },
+  { label: "Journey", href: "/#journey" },
+];
 export const Navbar = () => {
-  const [mobileMenu, setMobileMenu] = useState({
-    left: false,
-  });
-
-  const toggleDrawer = (anchor, open) => (event) => {
-    if (
-      event.type === "keydown" &&
-      (event.type === "Tab" || event.type === "Shift")
-    ) {
-      return;
-    }
-
-    setMobileMenu({ ...mobileMenu, [anchor]: open });
-  };
-
-  const list = (anchor) => (
-    <Box
-      sx={{ width: anchor === "top" || anchor === "bottom" ? "auto" : 250 }}
-      role="presentation"
-      onClick={toggleDrawer(anchor, false)}
-      onKeyDown={toggleDrawer(anchor, false)}
-    >
-      <List>
-        {["Home", "Features", "Services", "Listed", "Contact"].map(
-          (text, index) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  {index === 0 && <HomeIcon />}
-                  {index === 1 && <FeaturedPlayListIcon />}
-                  {index === 2 && <MiscellaneousServicesIcon />}
-                  {index === 3 && <ListAltIcon />}
-                  {index === 4 && <ContactsIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          )
-        )}
-      </List>
+  const [scrolled, setScrolled] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const loc = useLocation();
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 25, restDelta: 0.001 });
+  React.useEffect(() => { setOpen(false); }, [loc.pathname]);
+  return (
+    <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, transition: "all 0.3s ease", bgcolor: scrolled ? "rgba(5,5,7,0.82)" : "transparent", backdropFilter: scrolled ? "blur(14px)" : "none", borderBottom: scrolled ? "1px solid rgba(255,255,255,0.10)" : "1px solid transparent" }}>
+      <Container maxWidth="lg" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 2 }}>
+        <Box component={Link} to="/" sx={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ width: "1.875rem", height: "1.875rem", borderRadius: "0.5rem", border: "1px solid rgba(109,74,255,0.45)", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#101016" }}>
+            <Scan size={16} color="#8B72FF" />
+          </Box>
+          <Typography sx={{ color: "#F2F0F8", fontWeight: 800, letterSpacing: "3px", fontSize: "0.875rem" }}>AUTHENTISCAN</Typography>
+        </Box>
+        <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 3.5 }}>
+          {links.map((l) => (
+            <Box key={l.label} component="a" href={l.href} sx={{ color: "#A5A1B2", fontSize: "0.875rem", fontWeight: 500, textDecoration: "none", "&:hover": { color: "#F2F0F8" } }}>{l.label}</Box>
+          ))}
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+            <Button component={Link} to="/login" sx={{ color: "#A5A1B2", fontSize: "0.875rem", fontWeight: 600, textTransform: "none" }}>Login</Button>
+          </Box>
+          <Magnetic>
+            <Button component={Link} to="/scanner" sx={{ bgcolor: "#6D4AFF", color: "#F2F0F8", borderRadius: "0.625rem", px: 2.5, py: 1, fontSize: "0.8125rem", fontWeight: 700, textTransform: "none", border: "1px solid #6D4AFF" }}>SCAN A PRODUCT</Button>
+          </Magnetic>
+          <Button onClick={() => setOpen(true)} sx={{ display: { xs: "flex", md: "none" }, minWidth: 0, color: "#F2F0F8", p: 1 }}><Menu size={20} /></Button>
+        </Box>
+      </Container>
+      <motion.div style={{ scaleX: progress, transformOrigin: "0% 50%", height: 2, width: "100%", bgcolor: "#6D4AFF" }} />
+      <Drawer anchor="right" open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { bgcolor: "#0A0A0F", width: "82vw", maxWidth: 360 } }}>
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography sx={{ color: "#F2F0F8", fontWeight: 800, letterSpacing: "3px", fontSize: "0.8125rem" }}>AUTHENTISCAN</Typography>
+          <Button onClick={() => setOpen(false)} sx={{ minWidth: 0, color: "#A5A1B2" }}><X size={20} /></Button>
+          </Box>
+          {links.map((l) => (
+            <Box key={l.label} component="a" href={l.href} sx={{ color: "#F2F0F8", fontSize: "1.75rem", fontWeight: 700, py: 1.2, textDecoration: "none", borderBottom: "1px solid rgba(255,255,255,0.10)" }}>{l.label}</Box>
+          ))}
+          <Box sx={{ mt: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Button component={Link} to="/scanner" fullWidth sx={{ bgcolor: "#6D4AFF", color: "#fff", borderRadius: "0.625rem", py: 1.4, fontWeight: 700, textTransform: "none" }}>SCAN A PRODUCT</Button>
+            <Button component={Link} to="/login" fullWidth variant="outlined" sx={{ borderColor: "rgba(255,255,255,0.10)", color: "#F2F0F8", borderRadius: "0.625rem", py: 1.4, textTransform: "none" }}>Login</Button>
+          </Box>
+        </Box>
+      </Drawer>
     </Box>
   );
-
-  const NavLink = styled(Typography)(({ theme }) => ({
-    fontSize: "14px",
-    color: "#4F5361",
-    fontWeight: "bold",
-    cursor: "pointer",
-    "&:hover": {
-      color: "#fff",
-    },
-  }));
-
-  const NavbarLinksBox = styled(Box)(({ theme }) => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: theme.spacing(3),
-    [theme.breakpoints.down("md")]: {
-      display: "none",
-    },
-  }));
-
-  const CustomMenuIcon = styled(MenuIcon)(({ theme }) => ({
-    cursor: "pointer",
-    display: "none",
-    marginRight: theme.spacing(2),
-    [theme.breakpoints.down("md")]: {
-      display: "block",
-    },
-  }));
-
-  const NavbarContainer = styled(Container)(({ theme }) => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: theme.spacing(5),
-    [theme.breakpoints.down("md")]: {
-      padding: theme.spacing(2),
-    },
-  }));
-
-  const NavbarLogo = styled("img")(({ theme }) => ({
-    cursor: "pointer",
-    [theme.breakpoints.down("md")]: {
-      display: "none",
-    },
-  }));
-
-  return (
-    <NavbarContainer>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "2.5rem",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <CustomMenuIcon onClick={toggleDrawer("left", true)} />
-          <Drawer
-            anchor="left"
-            open={mobileMenu["left"]}
-            onClose={toggleDrawer("left", false)}
-          >
-            {list("left")}
-          </Drawer>
-          <NavbarLogo src={logoImg} alt="Identeefi." />
-        </Box>
-
-        {/* <NavbarLinksBox>
-          <NavLink variant="body2">Home</NavLink>
-          <NavLink variant="body2">Features</NavLink>
-          <NavLink variant="body2">Services</NavLink>
-          <NavLink variant="body2">Listed</NavLink>
-          <NavLink variant="body2">Contact</NavLink>
-        </NavbarLinksBox> */}
-      </Box>
-
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "1rem",
-        }}
-      >
-        {/* <NavLink variant="body2">Sign Up</NavLink> */}
-        <Link to="/login" style={{ textDecoration: 'none'}}>
-          <CustomButton
-            backgroundColor="#0F1B4C"
-            color="#fff"
-            buttonText="Login"
-            NavLink="/login"
-
-          />
-        </Link>
-        
-      </Box>
-    </NavbarContainer>
-  );
 };
-
 export default Navbar;
+

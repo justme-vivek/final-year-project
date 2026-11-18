@@ -1,4 +1,3 @@
-// import { HomeBackground } from '@assets/index';
 import bgImg from '../../img/bg.png'
 import { Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';

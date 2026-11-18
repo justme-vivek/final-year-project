@@ -198,10 +198,6 @@ const UpdateProduct = () => {
             const date = dayjs(item.timestamp * 1000).format('MM/DD/YYYY');
             const time = dayjs(item.timestamp * 1000).format('HH:mm a');
 
-            // if (item.isSold) {
-            //     setIsSold(true);
-            // }
-
             return (
                 <TimelineItem key={index}>
                     <TimelineOppositeContent color="textSecondary">

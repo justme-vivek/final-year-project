@@ -1,26 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import Navbar from '../../components/Navbar'
-// import Home from '@pages/Home'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { useWeb3React } from '@web3-react/core'
 import GoldButton from '../../components/Buttons/GoldButton'
 import { addChainToMetamask, chainChangeRequest } from '../../utils'
 import { styled } from '@mui/material/styles'
 import { SupportedChainId, chainConfig } from '../../constants/chains'
-// import Info from '@pages/Info'
 import Loader from '../../components/Loader'
 import { useAppDispatch, useAppSelector } from '../../hooks/'
 import { Alert, Box, Snackbar, Typography } from '@mui/material'
-// import { StakeBackground } from '@assets/'
 import { useSelector } from 'react-redux'
 import { initialStateSnackbar, setSnackbar } from '../../redux/slices/themeSlice'
 import { ThemeContainer } from './styles'
 import { setAvailableContracts } from '../../redux/slices/walletSlice'
-import {
-  AvailableContracts,
-  ChainContracts,
-  ChainParams,
-} from '../../hooks/useContract/types'
+import { ChainContracts } from '../../hooks/useContract/types'
 
 const WrongNetworkErrorContainer = styled('div')(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -122,7 +115,6 @@ const Router = () => {
           </Typography>
         </GoldButton>
 
-        {/* Other Routes and Components */}
       </ThemeContainer>
 
       <Snackbar

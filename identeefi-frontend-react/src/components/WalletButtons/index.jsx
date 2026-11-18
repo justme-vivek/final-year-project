@@ -1,4 +1,3 @@
-// import '@walletconnect/react-native-compat';
 import React, { FC, useCallback, useEffect, useState } from 'react'
 import {defaultWagmiConfig }from "@web3modal/wagmi"
 import { http, createConfig } from 'wagmi'
@@ -7,12 +6,10 @@ import { createWeb3Modal ,useWeb3Modal} from '@web3modal/wagmi/react'
 import { WagmiProvider } from 'wagmi'
 import { injected, safe, walletConnect } from 'wagmi/connectors';
 import  {WagmiConfig} from 'wagmi'
-// import { mainnet, polygon, arbitrum } from 'viem/chains'
 import { Connector } from '@web3-react/types'
 import {
   ConnectionType,
   getConnection,
-  getConnectionName,
 } from '../../connection'
 import { useAppDispatch } from '../../hooks'
 import { setSelectedWallet } from '../../redux/slices/walletSlice'
@@ -21,28 +18,10 @@ import GoldButton from '../../components/Buttons/GoldButton.jsx'
 import OutlinedButton from '../../components/Buttons/OutlinedButton.jsx'
 import { shortenAddress } from '../../utils'
 import Toast from '../modals/Toast'
-import { Box, Button, Grid, Typography, styled } from '@mui/material'
+import { styled, Button } from '@mui/material'
 import ConnectWalletModal from '../modals/ConnectWalletModal'
-// import { MetaMaskAvatar } from 'react-metamask-avatar'
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
-// import  ConnectionType  from '../../connection/index.js';
 
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-// import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { useAccount } from 'wagmi'
-// import { useNetwork } from 'wagmi'
-// import { getChainId } from 'wagmi';
-
-// const ButtonsContainer = styled('div')(() => ({
-//   display: 'flex',
-//   flexDirection: 'row',
-//   alignItems: 'center',
-//   // width: '310px',
-//   justifyContent: 'center',
-//   width:"100%",
-//   border:"1px solid blue"
-// }))
 
 const projectId ='02199594d20a19c660e1e9df699e0800';
 const metadata = {
@@ -77,7 +56,6 @@ createWeb3Modal({
   enableAnalytics: true // Optional - defaults to your Cloud configuration
 })
 
-//new 
 export const config = createConfig({
   chains: [mainnet, sepolia, vanarChain],
   connectors: [
@@ -98,7 +76,6 @@ export const config = createConfig({
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',
-  // width: '310px',
   justifyContent:  'center',
   width: fullWidth ? '100%' : 'auto',
 }))
@@ -122,19 +99,8 @@ export const config = createConfig({
 const WalletButtons = (props) => {
   const { open, close } = useWeb3Modal()
   const { address, isConnecting, isDisconnected, isConnected } = useAccount()
-  // console.log('is connect')
-
-  // (async () => {
-  //   const chainId = await getChainId();
-  //   console.log('chain id', chainId)
-  // })()
-
-  // const { chain } = useNetwork()
-
-  // console.log('chain id', chain)
 
   const [modalOpen, setModalOpen] = useState(false)
-  // const { open: wagmiOpen, close } = useWeb3Modal()
 
   const { account, connector } = useWeb3React()
 
@@ -143,7 +109,6 @@ const WalletButtons = (props) => {
   const dispatch = useAppDispatch()
 
   const [anchorEl, setAnchorEl] = React.useState(null)
-  // const open = Boolean(anchorEl)
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget)
   }
@@ -168,21 +133,10 @@ const WalletButtons = (props) => {
       sessionStorage.setItem('connection-type', connectionType)
 
       try {
-        //  setPendingConnector(connector)
-        //  setWalletView(WALLET_VIEWS.PENDING)
-        //  dispatch(updateConnectionError({ connectionType, error: undefined }))
-
         await connector.activate()
         dispatch(setSelectedWallet(connectionType))
       } catch (error) {
         console.error(`web3-react connection error: ${error}`)
-        // dispatch(
-        //   updateConnectionError({ connectionType, error: error.message }),
-        // )
-        // sendAnalyticsEvent(EventName.WALLET_CONNECT_TXN_COMPLETED, {
-        //   result: WALLET_CONNECTION_RESULT.FAILED,
-        //   wallet_type: getConnectionName(connectionType, getIsMetaMask()),
-        // })
       }
     },
     [dispatch],
@@ -215,77 +169,6 @@ const WalletButtons = (props) => {
               open()
             }}
            >Connect Wallet</ConnectWalletButton>) : shortenAddress(address.toLowerCase(), 4, 8)}
-           {/* <button onClick={handleDisconnectWallet} >Disconnect</button> */}
-        {/* {!account ? (
-    
-          <ConnectWalletButton
-            variant="contained"
-            onClick={() => setShowConnectWalletModal(true)}
-            fullWidth={props.fullWidth ? true : false}
-          >
-            Connect Wallet
-          </ConnectWalletButton>
-        ) : (
-          <>
-             <Button
-              variant="outlined"
-              onClick={() => {
-                navigator.clipboard.writeText(account)
-                setModalOpen(true)
-              }}
-              sx={{
-                marginRight: 1,
-                textTransform: 'none',
-              }}
-            >
-              {shortenAddress(account.toLowerCase(), 4, 8)}
-            </Button>
-            <Button
-              variant="contained"
-              style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
-              onClick={onDisconnectClick}
-            >
-              Disconnect
-            </Button> 
-
-            <Box
-              onClick={handleClick}
-              display={'flex'}
-              alignItems={'center'}
-              sx={{ cursor: 'pointer' }}
-            >
-              <MetaMaskAvatar address={account} size={24} />
-              <Typography variant="h5" marginLeft={2}>
-                {shortenAddress(account.toLowerCase(), 4, 8)}
-              </Typography>
-              <ArrowDropDownIcon />
-            </Box>
-
-            <Menu
-              id="basic-menu"
-              anchorEl={anchorEl}
-              // open={open}
-              open={false}
-              onClose={handleClose}
-              MenuListProps={{
-                'aria-labelledby': 'basic-button',
-              }}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-            >
-              <MenuItem
-                onClick={() => {
-                  handleClose()
-                  onDisconnectClick()
-                }}
-              >
-                Disconnect
-              </MenuItem>
-            </Menu>
-          </>
-        )} */}
       </ButtonsContainer>
       <Toast
         open={modalOpen}
@@ -304,5 +187,4 @@ const WalletButtons = (props) => {
   )
 }
 
-// export default {WalletButtons,ButtonsContainer,ConnectWalletButton}
 export default WalletButtons;
