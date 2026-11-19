@@ -73,7 +73,7 @@ const RoleHome = ({ heading, actions }) => {
         </Box>
         {auth?.role !== 'admin' && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: connected ? colors.verified : colors.textSecondary }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: colors.textPrimary, background: colors.surfaceRaised, border: `1px solid ${connected ? colors.verified : colors.border}`, borderRadius: 100, padding: '8px 14px', minHeight: 40, boxSizing: 'border-box' }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: connected ? colors.verified : colors.textMuted }} />
               {connected ? 'Wallet connected' : 'Wallet not connected'}
             </span>

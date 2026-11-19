@@ -4,7 +4,7 @@ import { Button, Box } from '@mui/material';
 
 const QrScanner = (props) => {
   const [data, setData] = useState('');
-  const [facingMode, setFacingMode] = useState('user');
+  const [facingMode, setFacingMode] = useState('environment');
 
   useEffect(() => {
     console.info(data);
@@ -21,19 +21,21 @@ const QrScanner = (props) => {
         key={facingMode}
         onResult={(result, error) => {
           if (result) {
-            setData(result?.text);
+            setData((result?.text || '').trim());
           }
         }}
-        constraints={{ facingMode: facingMode }}
+        constraints={{ facingMode: { ideal: facingMode } }}
+        scanDelay={300}
+        videoContainerStyle={{ paddingTop: '100%' }}
         style={{ width: '100%' }}
       />
       <Button
         size="small"
         variant="outlined"
         onClick={toggleCamera}
-        sx={{ mt: 1, fontSize: '0.75rem' }}
+        sx={{ my: 1.5, fontSize: '0.875rem', color: '#F2F0F8', borderColor: 'rgba(255,255,255,0.3)', textTransform: 'none', minHeight: 44 }}
       >
-        Switch Camera ({facingMode === 'user' ? 'Rear' : 'Front'})
+        Use {facingMode === 'environment' ? 'front' : 'rear'} camera
       </Button>
     </Box>
   );

@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import axios from 'axios';
 import QRCode from 'qrcode.react';
 import Avatar from '../shared/Avatar';
+import QrModal from '../shared/QrModal';
 import { colors, radius } from '../../theme/tokens';
 
 const mono = "'IBM Plex Mono', ui-monospace, monospace";
@@ -17,10 +18,11 @@ const TxLink = ({ hash }) => hash ? (
     {hash.slice(0, 8)}…{hash.slice(-6)}
   </a>
 ) : <span style={{ color: colors.textMuted }}>-</span>;
-const Qr = ({ p, size = 64 }) => (
-  <span style={{ background: '#fff', padding: 4, borderRadius: 8, display: 'inline-flex' }}>
+const Qr = ({ p, size = 64, onOpen }) => (
+  <button type="button" onClick={() => onOpen(p)} aria-label={`Enlarge QR code for ${p.name}`} title="Click to enlarge"
+    style={{ background: '#fff', padding: 4, borderRadius: 8, display: 'inline-flex', border: 0, cursor: 'zoom-in' }}>
     <QRCode value={`${CONTRACT_ADDRESS},${p.serialNumber}`} size={size} level="H" />
-  </span>
+  </button>
 );
 
 const ProductsPage = () => {
@@ -28,6 +30,7 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [q, setQ] = useState('');
+  const [qrFor, setQrFor] = useState(null);
 
   useEffect(() => {
     axios.get(`${API_BASE}/productAll`)
@@ -82,7 +85,7 @@ const ProductsPage = () => {
                 <span style={{ fontSize: 14, color: colors.textSecondary }}>{p.manuName}<br />{p.manuLocation}</span>
                 <span style={{ fontSize: 14, color: colors.textSecondary }}>{fmtDate(p.manuDate)}</span>
                 <TxLink hash={p.txHash} />
-                <Qr p={p} size={56} />
+                <Qr p={p} size={56} onOpen={setQrFor} />
               </div>
             ))}
           </Box>
@@ -104,13 +107,14 @@ const ProductsPage = () => {
                     <span>Registered {fmtDate(p.manuDate)}</span>
                     <TxLink hash={p.txHash} />
                   </div>
-                  <Qr p={p} size={72} />
+                  <Qr p={p} size={72} onOpen={setQrFor} />
                 </div>
               </div>
             ))}
           </Box>
         </>
       )}
+      {qrFor && <QrModal serial={qrFor.serialNumber} name={qrFor.name} onClose={() => setQrFor(null)} />}
     </Box>
   );
 };

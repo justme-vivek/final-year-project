@@ -46,7 +46,7 @@ const ScannerPage = () => {
             const cleanSerial = serial.toString().trim();
 
             try {
-                const res = await axios.get(`${API_BASE}/products/serialNumbers`);
+                const res = await axios.get(`${API_BASE}/products/serialNumbers`, { timeout: 30000 });
                 const list = res.data || [];
                 const foundInDb = list.some(item => 
                     item.serialnumber && item.serialnumber.toString().trim().toLowerCase() === cleanSerial.toLowerCase()

@@ -4,6 +4,7 @@ import Web3 from 'web3';
 import axios from 'axios';
 import abi from '../../utils/Identeefi.json';
 import QRCode from 'qrcode.react';
+import QrModal from '../shared/QrModal';
 import dayjs from 'dayjs';
 import useAuth from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -62,6 +63,7 @@ const AddProduct = () => {
         filepreview: null
     });
     const [qrData, setQrData] = useState('');
+    const [qrOpen, setQrOpen] = useState(false);
     const [manuDate, setManuDate] = useState('');
     const [manuLatitude, setManuLatitude] = useState("");
     const [manuLongtitude, setManuLongtitude] = useState("");
@@ -467,9 +469,11 @@ const AddProduct = () => {
                     {qrData !== '' && (
                         <Card title="Your QR code">
                             <Notice kind="success">Product registered. Download the QR code and attach it to the product.</Notice>
-                            <div style={{ alignSelf: 'center', background: '#fff', padding: 8, borderRadius: 12, maxWidth: '100%' }}>
+                            <button type="button" onClick={() => setQrOpen(true)} aria-label="Enlarge QR code" title="Click to enlarge" style={{ alignSelf: 'center', background: '#fff', padding: 8, borderRadius: 12, maxWidth: '100%', border: 0, cursor: 'zoom-in' }}>
                                 <QRCode value={qrData} size={220} level="H" includeMargin={true} id="QRCode" style={{ maxWidth: '100%', height: 'auto' }} />
-                            </div>
+                            </button>
+                            <span style={{ alignSelf: 'center', fontSize: 13, color: colors.textSecondary }}>Click the QR code to enlarge it.</span>
+                            {qrOpen && <QrModal serial={serialNumber} name={name} onClose={() => setQrOpen(false)} />}
                             <Row k="Serial number" v={serialNumber} monoV />
                             <button type="button" style={btnPrimary} onClick={downloadQR}>Download QR code</button>
                         </Card>

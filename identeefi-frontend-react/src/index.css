@@ -40,3 +40,12 @@ code, .mono { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; }
   .authentiscan-container { padding-left: 18px; padding-right: 18px; }
 }
 
+
+/* Wallet button (web3modal): keep it readable on the dark background */
+w3m-button, w3m-connect-button, w3m-account-button {
+  --w3m-accent: #6D4AFF;
+  --w3m-color-mix: #181821;
+  --w3m-color-mix-strength: 30;
+  --w3m-font-family: 'Manrope', system-ui, sans-serif;
+  color: #F2F0F8;
+}

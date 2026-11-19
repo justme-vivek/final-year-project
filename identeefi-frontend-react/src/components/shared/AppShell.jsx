@@ -43,10 +43,13 @@ const AppShell = () => {
         </Box>
         <nav aria-label="Main" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {items.map((it) => (
-            <NavLink key={it.to} to={it.to} aria-label={it.label} style={link('rail')} title={it.label}>
+            <Box key={it.to} component={NavLink} to={it.to} aria-label={it.label} title={it.label}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, textDecoration: 'none', borderRadius: '10px', minHeight: 44, px: { md: 0, lg: 1.5 }, justifyContent: { md: 'center', lg: 'flex-start' },
+                color: colors.textSecondary, fontSize: 15, fontWeight: 600, '&:hover': { color: colors.textPrimary },
+                '&.active': { color: colors.textPrimary, background: colors.surfaceRaised, fontWeight: 700 } }}>
               <Icon n={it.icon} />
               <Box component="span" sx={{ display: { md: 'none', lg: 'inline' } }}>{it.label}</Box>
-            </NavLink>
+            </Box>
           ))}
         </nav>
         <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1, alignItems: { md: 'center', lg: 'flex-start' }, px: { lg: 1 } }}>

@@ -133,7 +133,7 @@ const Product = () => {
         navigate(-1)
     }
 
-    const found = checks.server || checks.chain;
+    const found = checks.server; // only products registered in the database count as authentic
     const status = !checks.done ? 'pending' : found ? 'authentic' : 'fake';
     const entries = toEntries(history, profiles);
     const known = history.filter((h) => profiles[(h.actor || '').toLowerCase()]).length;
