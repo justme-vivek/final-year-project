@@ -1,195 +1,118 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, CircularProgress, Chip, Button } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import heroBg from '../../img/herobg.png';
+import { API_BASE, CONTRACT_ADDRESS } from '../../config';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box } from '@mui/material';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode.react';
+import Avatar from '../shared/Avatar';
+import { colors, radius } from '../../theme/tokens';
 
-const CONTRACT_ADDRESS = '0x62081f016446585cCC507528cc785980296b4Ccd';
-
-const columns = [
-    { field: 'serialNumber', headerName: 'Serial Number', flex: 1, minWidth: 130 },
-    { field: 'name', headerName: 'Product Name', flex: 1.2, minWidth: 130 },
-    { field: 'brand', headerName: 'Brand', flex: 0.8, minWidth: 90 },
-    { field: 'description', headerName: 'Description', flex: 1.5, minWidth: 150 },
-    { field: 'manuName', headerName: 'Manufacturer', flex: 1, minWidth: 120 },
-    { field: 'manuLocation', headerName: 'Location', flex: 1, minWidth: 120 },
-    {
-        field: 'manuDate',
-        headerName: 'Mfg Date',
-        flex: 0.9,
-        minWidth: 100,
-        valueFormatter: (params) => {
-            if (!params.value) return '—';
-            const ts = parseInt(params.value);
-            if (isNaN(ts)) return params.value;
-            return new Date(ts * 1000).toLocaleDateString();
-        },
-    },
-    {
-        field: 'txHash',
-        headerName: 'Tx Hash',
-        flex: 1,
-        minWidth: 120,
-        renderCell: (params) => {
-            if (!params.value) return <span style={{ color: '#888' }}>—</span>;
-            const short = `${params.value.slice(0, 8)}...${params.value.slice(-6)}`;
-            return (
-                <a
-                    href={`https://sepolia.etherscan.io/tx/${params.value}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#a78bfa', textDecoration: 'underline', fontSize: '0.82rem' }}
-                >
-                    {short}
-                </a>
-            );
-        },
-    },
-    {
-        field: 'qr',
-        headerName: 'QR',
-        flex: 0.7,
-        minWidth: 80,
-        sortable: false,
-        renderCell: (params) => (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <QRCode
-                    value={`${CONTRACT_ADDRESS},${params.row.serialNumber}`}
-                    size={52}
-                    level="H"
-                    includeMargin={true}
-                    id={`qr-${params.row.serialNumber}`}
-                />
-            </Box>
-        ),
-    },
-];
+const mono = "'IBM Plex Mono', ui-monospace, monospace";
+const fmtDate = (v) => {
+  if (!v) return '-';
+  const ts = parseInt(v, 10);
+  return Number.isNaN(ts) ? v : new Date(ts * 1000).toLocaleDateString();
+};
+const TxLink = ({ hash }) => hash ? (
+  <a href={`https://sepolia.etherscan.io/tx/${hash}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: mono, fontSize: 13 }}>
+    {hash.slice(0, 8)}…{hash.slice(-6)}
+  </a>
+) : <span style={{ color: colors.textMuted }}>-</span>;
+const Qr = ({ p, size = 64 }) => (
+  <span style={{ background: '#fff', padding: 4, borderRadius: 8, display: 'inline-flex' }}>
+    <QRCode value={`${CONTRACT_ADDRESS},${p.serialNumber}`} size={size} level="H" />
+  </span>
+);
 
 const ProductsPage = () => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [q, setQ] = useState('');
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const res = await axios.get('https://final-year-project-133i.onrender.com/productAll');
-                setProducts(res.data || []);
-            } catch (err) {
-                console.error('Error fetching products:', err);
-                setError('Failed to load products. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProducts();
-    }, []);
+  useEffect(() => {
+    axios.get(`${API_BASE}/productAll`)
+      .then((res) => setProducts(res.data || []))
+      .catch((err) => { console.error(err); setError('Could not load products. Check your connection and refresh.'); })
+      .finally(() => setLoading(false));
+  }, []);
 
-    return (
-        <Box
-            sx={{
-                backgroundImage: `url(${heroBg})`,
-                minHeight: '100vh',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: 'cover',
-                position: 'absolute',
-                left: 0, right: 0, top: 0, bottom: 0,
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                pt: 6,
-                pb: 8,
-            }}
-        >
-            <Paper
-                elevation={6}
-                sx={{
-                    width: { xs: '95%', md: '90%', lg: '80%' },
-                    backgroundColor: '#161232cc',
-                    borderRadius: 3,
-                    p: 3,
-                }}
-            >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography
-                        variant="h4"
-                        sx={{
-                            color: '#fff',
-                            fontFamily: 'Gambetta',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        ðŸ“¦ Products
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Chip
-                            label={`${products.length} product${products.length !== 1 ? 's' : ''}`}
-                            sx={{ backgroundColor: '#65529d', color: '#fff', fontWeight: 'bold' }}
-                        />
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            sx={{ color: '#fff', borderColor: '#fff' }}
-                            onClick={() => navigate(-1)}
-                        >
-                            â† Back
-                        </Button>
-                    </Box>
-                </Box>
+  const rows = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return s ? products.filter((p) => [p.name, p.brand, p.serialNumber, p.manuName].some((v) => (v || '').toLowerCase().includes(s))) : products;
+  }, [products, q]);
 
-                {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                        <CircularProgress sx={{ color: '#fff' }} />
-                    </Box>
-                ) : error ? (
-                    <Typography sx={{ color: 'salmon', textAlign: 'center', py: 4 }}>{error}</Typography>
-                ) : products.length === 0 ? (
-                    <Typography sx={{ color: '#ccc', textAlign: 'center', py: 6, fontSize: '1.1rem' }}>
-                        No products found. Add your first product via <strong>Add Product</strong>.
-                    </Typography>
-                ) : (
-                    <Box sx={{ height: 520 }}>
-                        <DataGrid
-                            rows={products}
-                            columns={columns}
-                            getRowId={(row) => row.id || row.serialNumber}
-                            rowHeight={72}
-                            pageSize={7}
-                            rowsPerPageOptions={[7, 15, 30]}
-                            sx={{
-                                border: 'none',
-                                color: '#fff',
-                                '& .MuiDataGrid-columnHeaders': {
-                                    backgroundColor: '#2a1f5c',
-                                    color: '#fff',
-                                    fontWeight: 'bold',
-                                    fontSize: '0.95rem',
-                                },
-                                '& .MuiDataGrid-row': {
-                                    backgroundColor: '#1e1650aa',
-                                    '&:hover': { backgroundColor: '#2e2a6688' },
-                                },
-                                '& .MuiDataGrid-cell': {
-                                    borderColor: '#3a3060',
-                                    color: '#e8e8f8',
-                                },
-                                '& .MuiDataGrid-footerContainer': {
-                                    backgroundColor: '#2a1f5c',
-                                    color: '#fff',
-                                },
-                                '& .MuiTablePagination-root': { color: '#fff' },
-                                '& .MuiSvgIcon-root': { color: '#fff' },
-                            }}
-                        />
-                    </Box>
-                )}
-            </Paper>
+  const cols = 'minmax(0,2.4fr) minmax(0,1.3fr) minmax(0,1.4fr) minmax(0,1.2fr) minmax(0,1.3fr) 80px';
+
+  return (
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: { xs: '24px 16px 96px', md: '32px 24px', lg: '40px 48px' }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <h1 style={{ margin: 0, fontSize: 28, lineHeight: '34px', fontWeight: 800, letterSpacing: '-0.02em' }}>Products</h1>
+          <span style={{ fontSize: 14, color: colors.textSecondary }}>{loading ? 'Loading…' : `${products.length} registered`}</span>
         </Box>
-    );
+        <input aria-label="Search products" placeholder="Search by name, brand or serial" value={q} onChange={(e) => setQ(e.target.value)}
+          style={{ width: '100%', maxWidth: 340, background: colors.surfaceRaised, border: '1px solid rgba(255,255,255,0.16)', borderRadius: radius.control, minHeight: 48, padding: '0 16px', color: colors.textPrimary, fontSize: 15, fontFamily: 'inherit' }} />
+      </Box>
+
+      {error ? (
+        <div role="alert" style={{ color: colors.alert }}>{error}</div>
+      ) : loading ? (
+        <span style={{ color: colors.textSecondary }}>Loading products…</span>
+      ) : rows.length === 0 ? (
+        <div style={{ padding: 32, border: `1px dashed ${colors.border}`, borderRadius: radius.card, color: colors.textSecondary }}>
+          {products.length ? 'No products match your search.' : 'No products yet. Manufacturers can register one from Add product.'}
+        </div>
+      ) : (
+        <>
+          {/* tablet and up: table */}
+          <Box sx={{ display: { xs: 'none', md: 'block' }, border: `1px solid ${colors.border}`, borderRadius: radius.card, background: colors.surface, overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, padding: '14px 24px', borderBottom: `1px solid ${colors.border}`, fontSize: 14, color: colors.textSecondary, fontWeight: 600 }}>
+              <span>Product</span><span>Serial</span><span>Manufacturer</span><span>Registered</span><span>Transaction</span><span>QR</span>
+            </div>
+            {rows.map((p) => (
+              <div key={p.serialNumber} style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <Avatar kind="product" name={p.name} image={p.image} size={56} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                    <div style={{ fontSize: 13, color: colors.textSecondary }}>{p.brand}</div>
+                  </div>
+                </div>
+                <span style={{ fontFamily: mono, fontSize: 13, color: colors.textSecondary, overflowWrap: 'anywhere' }}>{p.serialNumber}</span>
+                <span style={{ fontSize: 14, color: colors.textSecondary }}>{p.manuName}<br />{p.manuLocation}</span>
+                <span style={{ fontSize: 14, color: colors.textSecondary }}>{fmtDate(p.manuDate)}</span>
+                <TxLink hash={p.txHash} />
+                <Qr p={p} size={56} />
+              </div>
+            ))}
+          </Box>
+          {/* phone: cards */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+            {rows.map((p) => (
+              <div key={p.serialNumber} style={{ border: `1px solid ${colors.border}`, borderRadius: radius.card, background: colors.surface, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <Avatar kind="product" name={p.name} image={p.image} size={64} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 800 }}>{p.name}</div>
+                    <div style={{ fontSize: 14, color: colors.textSecondary }}>{p.brand}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, fontSize: 13, color: colors.textSecondary }}>
+                    <span style={{ fontFamily: mono, overflowWrap: 'anywhere' }}>{p.serialNumber}</span>
+                    <span>{p.manuName}, {p.manuLocation}</span>
+                    <span>Registered {fmtDate(p.manuDate)}</span>
+                    <TxLink hash={p.txHash} />
+                  </div>
+                  <Qr p={p} size={72} />
+                </div>
+              </div>
+            ))}
+          </Box>
+        </>
+      )}
+    </Box>
+  );
 };
 
 export default ProductsPage;

@@ -11,7 +11,12 @@ export const colors = {
   purpleDeep: '#4F23F8',
   textPrimary: '#F2F0F8',
   textSecondary: '#A5A1B2',
-  textMuted: '#706C7A',
+  textMuted: '#8F8B9C',
+  violetText: '#9B85FF',
+  surfaceRaised: '#181821',
+  line: 'rgba(255,255,255,0.10)',
+  verified: '#35C98A',
+  alert: '#E05A6D',
   border: 'rgba(255,255,255,0.10)',
   borderPurple: 'rgba(109,74,255,0.45)',
   purpleHoverBg: 'rgba(109,74,255,0.04)',
@@ -21,7 +26,7 @@ export const colors = {
 };
 
 export const radius = {
-  control: 8,
+  control: 10,
   button: 10,
   card: 16,
   cardLarge: 20,
@@ -29,7 +34,8 @@ export const radius = {
 };
 
 export const typography = {
-  fontFamily: "'Manrope', 'DM Sans', 'IBM Plex Sans', sans-serif",
+  fontFamily: "'Manrope', 'DM Sans', system-ui, sans-serif",
+  mono: "'IBM Plex Mono', ui-monospace, Menlo, monospace",
   hero: { fontSize: '64px', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.02em' },
   pageHeading: { fontSize: '40px', fontWeight: 600, lineHeight: 1.15 },
   sectionHeading: { fontSize: '32px', fontWeight: 600, lineHeight: 1.2 },
@@ -40,11 +46,13 @@ export const typography = {
 };
 
 export const layout = {
-  maxWidth: 1280,
+  maxWidth: 1200,
   paddingDesktop: 40,
   paddingTablet: 24,
   paddingMobile: 18,
 };
+
+export const breakpoints = { xs: 0, sm: 480, md: 768, lg: 1024, xl: 1280 };
 
 export const motion = {
   duration: 0.35,
@@ -52,6 +60,6 @@ export const motion = {
   pageAnimate: { opacity: 1, y: 0 },
 };
 
-const tokens = { colors, radius, typography, layout, motion };
+const tokens = { colors, radius, typography, layout, breakpoints, motion };
 
 export default tokens;

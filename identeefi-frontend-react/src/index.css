@@ -6,7 +6,7 @@ body {
   margin: 0;
   background: #050507;
   color: #F2F0F8;
-  font-family: 'Manrope', 'DM Sans', 'IBM Plex Sans', sans-serif;
+  font-family: 'Manrope', 'DM Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -31,8 +31,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   outline: 2px solid #6D4AFF;
   outline-offset: 2px;
 }
-code { font-family: ui-monospace, Menlo, Monaco, Consolas, monospace; }
-.authentiscan-container { max-width: 1280px; margin: 0 auto; padding-left: 40px; padding-right: 40px; }
+code, .mono { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; }
+.authentiscan-container { max-width: 1200px; margin: 0 auto; padding-left: 40px; padding-right: 40px; }
 @media (max-width: 900px) {
   .authentiscan-container { padding-left: 24px; padding-right: 24px; }
 }

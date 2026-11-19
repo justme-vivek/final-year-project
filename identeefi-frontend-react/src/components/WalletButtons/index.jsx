@@ -1,3 +1,4 @@
+import { WALLETCONNECT_PROJECT_ID_BUTTONS } from '../../config';
 import React, { FC, useCallback, useEffect, useState } from 'react'
 import {defaultWagmiConfig }from "@web3modal/wagmi"
 import { http, createConfig } from 'wagmi'
@@ -23,7 +24,7 @@ import ConnectWalletModal from '../modals/ConnectWalletModal'
 
 import { useAccount } from 'wagmi'
 
-const projectId ='02199594d20a19c660e1e9df699e0800';
+const projectId = WALLETCONNECT_PROJECT_ID_BUTTONS;
 const metadata = {
   name: 'Web3Modal RN',
   description: 'Web3Modal RN Example',

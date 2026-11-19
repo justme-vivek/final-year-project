@@ -1,3 +1,4 @@
+import { WALLETCONNECT_PROJECT_ID } from '../../config';
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { defaultWagmiConfig  } from '@web3modal/wagmi/react/config';
 import { defineChain } from 'viem'
@@ -10,7 +11,7 @@ import Router from '../../components/Router'
 const queryClient = new QueryClient()
 
 // 1. Get projectId at https://cloud.walletconnect.com
-const projectId = '7236c984a38479e85f91b945bd9076a8'
+const projectId = WALLETCONNECT_PROJECT_ID
 // 2. Create wagmiConfig
 const metadata = {
   name: 'Web3Modal',

@@ -1,549 +1,158 @@
-import '../../css/Role.css'
-import { TextField, Box, Paper, Typography, Autocomplete, Button } from '@mui/material';
-import React from 'react'
-import { useRef, useState, useEffect } from 'react';
-import heroBg from '../../img/herobg.png';
+import { API_BASE } from '../../config';
+import React, { useRef, useState, useEffect } from 'react';
+import { Box } from '@mui/material';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
+import PhotoUploader from '../shared/PhotoUploader';
+import { colors, radius } from '../../theme/tokens';
 
-const options = ["manufacturer", "supplier", "retailer"]
-{console.log("hellp")}
+const ROLE_OPTIONS = [
+  { id: 'manufacturer', label: 'Manufacturer' },
+  { id: 'supplier', label: 'Supplier' },
+  { id: 'retailer', label: 'Retailer' },
+];
+
+const inputStyle = {
+  width: '100%', boxSizing: 'border-box', background: colors.surfaceRaised, border: '1px solid rgba(255,255,255,0.16)',
+  borderRadius: radius.control, minHeight: 48, padding: '0 16px', color: colors.textPrimary, fontSize: 15, fontFamily: 'inherit',
+};
+
+const Field = ({ label, hint, children }) => (
+  <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 600 }}>
+    {label}
+    {children}
+    {hint && <span style={{ fontSize: 13, fontWeight: 400, color: colors.textSecondary }}>{hint}</span>}
+  </label>
+);
 
 const AddAccount = () => {
-    const [user, setUser] = useState('');
-    const [pwd, setPwd] = useState('');
-    const [pwd2, setPwd2] = useState('');
-    const [role, setRole] = React.useState(options[0])
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [website, setWebsite] = useState('');
-    const [location, setLocation] = useState('');
-    const [errMsg, setErrMsg] = useState('');
-    const [image, setImage] = useState({
-        file: [],
-        filepreview: null
-    });
-    
-    const errRef = useRef();
-    const navigate = useNavigate();
-    const locationRouter = useLocation();
-    const editUser = locationRouter.state?.editUser;
-    const isEditMode = !!editUser;
+  const [user, setUser] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [pwd2, setPwd2] = useState('');
+  const [role, setRole] = useState(ROLE_OPTIONS[0].id);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [website, setWebsite] = useState('');
+  const [location, setLocation] = useState('');
+  const [photo, setPhoto] = useState(null);
+  const [errMsg, setErrMsg] = useState('');
+  const [okMsg, setOkMsg] = useState('');
+  const [busy, setBusy] = useState(false);
 
-    useEffect(() => {
-        if (isEditMode) {
-            setUser(editUser.username || '');
-            setRole(editUser.role || options[0]);
-            setName(editUser.name || '');
-            setDescription(editUser.description || '');
-            setWebsite(editUser.website || '');
-            setLocation(editUser.location || '');
-            // password left blank unless changing
-        }
-    }, [editUser, isEditMode]);
-    useEffect(() => {
-        setErrMsg('');
-    }, [user, pwd]);
+  const errRef = useRef();
+  const navigate = useNavigate();
+  const locationRouter = useLocation();
+  const editUser = locationRouter.state?.editUser;
+  const isEditMode = !!editUser;
 
-    const handleImage = async (e) => {
-        setImage({
-            ...image,
-            file: e.target.files[0],
-            filepreview: URL.createObjectURL(e.target.files[0])
-        })
+  useEffect(() => {
+    if (isEditMode) {
+      setUser(editUser.username || '');
+      setRole(editUser.role || ROLE_OPTIONS[0].id);
+      setName(editUser.name || '');
+      setDescription(editUser.description || '');
+      setWebsite(editUser.website || '');
+      setLocation(editUser.location || '');
     }
+  }, [editUser, isEditMode]);
 
-    // to upload image
-    const uploadImage = async (image) => {
-        const data = new FormData();
-        data.append("image", image.file);
-      try {
-        
-      
-        axios.post("https://final-year-project-133i.onrender.com/upload/profile", data, {
-            headers: { "Content-Type": "multipart/form-data" }
-        }).then(res => {
-            if (res.data.success === 1) {
-            }
-        })
+  useEffect(() => { setErrMsg(''); }, [user, pwd, pwd2]);
 
-    }catch (error) {
-        console.error("Error uploading image", error);
+  const uploadImage = async (file) => {
+    const data = new FormData();
+    data.append('image', file);
+    await axios.post(`${API_BASE}/upload/profile`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+  };
 
-        }
+  const reset = () => {
+    setUser(''); setPwd(''); setPwd2(''); setRole(ROLE_OPTIONS[0].id); setName('');
+    setDescription(''); setWebsite(''); setLocation(''); setPhoto(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (pwd !== pwd2) { setErrMsg('Passwords do not match.'); return; }
+    setBusy(true);
+    setOkMsg('');
+    try {
+      const profileData = {
+        username: user, name, description, website, location,
+        image: photo?.name || (isEditMode ? editUser.image : ''),
+        role,
+      };
+      if (isEditMode) {
+        if (pwd) profileData.password = pwd;
+        await axios.put(`${API_BASE}/profile/${user}`, profileData, { headers: { 'Content-Type': 'application/json' } });
+        if (photo) await uploadImage(photo);
+        navigate('/manage-account');
+        return;
+      }
+      await axios.post(`${API_BASE}/addaccount`, JSON.stringify({ username: user, password: pwd, role }), { headers: { 'Content-Type': 'application/json' } });
+      await axios.post(`${API_BASE}/addprofile`, profileData, { headers: { 'Content-Type': 'application/json' } });
+      if (photo) await uploadImage(photo);
+      setOkMsg(`Account created for ${name || user}.`);
+      reset();
+    } catch (err) {
+      if (!err?.response) setErrMsg('The server is not responding. Try again in a moment.');
+      else if (err.response.status === 400) setErrMsg('That username is taken or a field is missing. Check the form and try again.');
+      else if (err.response.status === 401) setErrMsg('You are not allowed to do this. Sign in as admin.');
+      else setErrMsg('Could not save the account. Try again later.');
+      errRef.current?.focus();
+    } finally {
+      setBusy(false);
     }
+  };
 
-    const handleBack = () => {
-        navigate(-1)
-    }
+  return (
+    <Box sx={{ maxWidth: 720, mx: 'auto', p: { xs: '24px 16px 96px', md: '32px 24px', lg: '40px 48px' } }}>
+      <h1 style={{ margin: '0 0 4px', fontSize: 28, lineHeight: '34px', fontWeight: 800, letterSpacing: '-0.02em' }}>{isEditMode ? 'Edit account' : 'Add account'}</h1>
+      <p style={{ margin: '0 0 24px', fontSize: 14, color: colors.textSecondary }}>
+        {isEditMode ? 'Change the details or photo. Leave the password empty to keep it.' : 'Create a login for a manufacturer, supplier or retailer.'}
+      </p>
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20, border: `1px solid ${colors.border}`, borderRadius: radius.card, background: colors.surface, padding: 24 }}>
+        <div ref={errRef} tabIndex={-1} role="alert" aria-live="assertive" style={{ color: colors.alert, fontSize: 14, display: errMsg ? 'block' : 'none' }}>{errMsg}</div>
+        {okMsg && <div role="status" style={{ color: colors.verified, fontSize: 14 }}>{okMsg}</div>}
 
-        // for debugging only
-        try {
-            const profileData = {
-                "username": user,
-                "name": name,
-                "description": description,
-                "website": website,
-                "location": location,
-                "image": image.file?.name || (isEditMode ? editUser.image : ''),
-                "role" : role
-            };
+        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, padding: 0 }}>Role</legend>
+          <div role="radiogroup" style={{ display: 'flex', background: colors.bgPrimary, border: `1px solid ${colors.border}`, borderRadius: radius.control, padding: 3, gap: 3 }}>
+            {ROLE_OPTIONS.map((r) => (
+              <button key={r.id} type="button" role="radio" aria-checked={role === r.id} onClick={() => setRole(r.id)}
+                style={{ flex: 1, minHeight: 44, borderRadius: 7, border: 0, fontSize: 14, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', background: role === r.id ? colors.purplePrimary : 'transparent', color: role === r.id ? '#fff' : colors.textSecondary }}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
-            if (isEditMode) {
-                if (pwd) profileData.password = pwd; // Optional password update
-                const res = await axios.put(`https://final-year-project-133i.onrender.com/profile/${user}`, profileData,
-                    { headers: {'Content-Type': 'application/json'} }
-                );
-                if (image.file && image.file.name) {
-                    uploadImage(image);
-                }
-                alert("Account updated successfully!");
-                navigate('/manage-account');
-            } else {
-                const accountData = JSON.stringify({
-                    "username": user,
-                    "password": pwd,
-                    "role": role
-                });
-                const res = await axios.post('https://final-year-project-133i.onrender.com/addaccount', accountData,
-                    { headers: {'Content-Type': 'application/json'} });
-                const res2 = await axios.post('https://final-year-project-133i.onrender.com/addprofile', profileData,
-                    { headers: {'Content-Type': 'application/json'} });
-                if (image.file && image.file.name) {
-                    uploadImage(image);
-                }
-                alert("Account created successfully!");
-            }
-            
-            
-            setUser('');
-            setPwd('');
-            setPwd2('');
-            setRole(options[0]);
-            setName('');
-            setDescription('');
-            setWebsite('');
-            setLocation('');
-            setImage({
-                file: [],
-                filepreview: null
-            });
+        <PhotoUploader kind="profile" label="Account photo" file={photo} onChange={setPhoto} existing={isEditMode ? editUser.image : ''} />
 
-        } catch (err) {
-            if (!err?.response) {
-                setErrMsg('Server is down. Please try again later.');
-            } else if (err.response?.status === 400) {
-                setErrMsg('Invalid username or password.');
-            } else if (err.response?.status === 401) {
-                setErrMsg('Unauthorized access.');
-            } else {
-                setErrMsg('Login Failed. Please try again later.');
-            }
-            errRef.current.focus();
-        }
-
-    };
-
-
-    return (
-        <Box
-            sx={{
-                backgroundImage: `url(${heroBg})`,
-                minHeight: "100vh",
-                backgroundRepeat: "no-repeat",
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                backgroundSize: "cover",
-                zIndex: -2,
-                overflowY: "scroll",
-            }}
-        >
-            <Paper
-                elevation={3}
-                sx={{
-                    width: { xs: "90%", sm: "80%", md: "400px" },
-                    margin: "auto",
-                    marginTop: "4%",
-                    marginBottom: "10%",
-                    padding: "3%",
-                    backgroundColor: "#161232c4",
-                }}
-            >
-                <p
-                    ref={errRef}
-                    className={errMsg ? "errmsg" : "offscreen"}
-                    aria-live="assertive"
-                >
-                    {errMsg}
-                </p>
-
-                <Typography
-                    variant="h2"
-                    sx={{
-                        textAlign: "center",
-                        marginBottom: "3%",
-                        fontFamily: "Gambetta",
-                        fontWeight: "bold",
-                        fontSize: { xs: "1.8rem", sm: "2.5rem" },
-                        color: "white"
-                    }}
-                >
-                    Add Account
-                </Typography>
-
-                <form onSubmit={handleSubmit}>
-                    <TextField
-                        fullWidth
-                        id={isEditMode ? "outlined-disabled" : "username"}
-                        margin="normal"
-                        label="Username"
-                        variant="outlined"
-                        autoComplete="off"
-                        onChange={(e) => setUser(e.target.value)}
-                        value={user}
-                        required
-                        disabled={isEditMode}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                            "& .MuiInputBase-input.Mui-disabled": {
-                                WebkitTextFillColor: "#fff",
-                            },
-                        }}
-                    />
-
-                    <TextField
-                        fullWidth
-                        id="password"
-                        margin="normal"
-                        label="Password"
-                        type="password"
-                        variant="outlined"
-                        onChange={(e) => setPwd(e.target.value)}
-                        value={pwd}
-                        required={!isEditMode}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                        }}
-                    />
-
-                    <TextField
-                        fullWidth
-                        id="confirm-password"
-                        margin="normal"
-                        label="Confirm Password"
-                        type="password"
-                        variant="outlined"
-                        onChange={(e) => setPwd2(e.target.value)}
-                        value={pwd2}
-                        required={!isEditMode && pwd.length > 0}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                        }}
-                    />
-
-                    {pwd === pwd2 ? null : (
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                textAlign: "center",
-                                fontSize: "12px",
-                                color: "red",
-                            }}
-                        >
-                            Passwords do not match
-                        </Typography>
-                    )}
-
-                    <Autocomplete
-                        disablePortal
-                        id="combo-box-demo"
-                        options={options}
-                        fullWidth
-                        value={role}
-                        onChange={(event, newRole) => {
-                            setRole(newRole);
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                fullWidth
-                                id="role"
-                                margin="normal"
-                                label="Role"
-                                variant="outlined"
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        "& fieldset": {
-                                            borderColor: "#fff",
-                                            opacity: 0.5,
-                                        },
-                                        "&:hover fieldset": {
-                                            borderColor: "#fff",
-                                        },
-                                        "&.Mui-focused fieldset": {
-                                            borderColor: "#fff",
-                                        },
-                                    },
-                                    "& .MuiInputLabel-root": {
-                                        color: "#fff",
-                                    },
-                                    "& .MuiInputBase-input": {
-                                        color: "#fff",
-                                        opacity: 1,
-                                    },
-                                }}
-                            />
-                        )}
-                    />
-
-                    <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ marginTop: "3%" }}
-                    >
-                        Upload Image
-                    
-                        <input type="file" hidden onChange={handleImage} />
-                    </Button>
-
-                    {image.filepreview !== null ? (
-                        <img
-                            src={image.filepreview}
-                            alt="preview"
-                            style={{ width: "100%", height: "100%" }}
-                        />
-                    ) : null}
-
-                    <TextField
-                        fullWidth
-                        id="name"
-                        margin="normal"
-                        label="Name"
-                        variant="outlined"
-                        onChange={(e) => setName(e.target.value)}
-                        value={name}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                        }}
-                    />
-
-                    <TextField
-                        fullWidth
-                        id="description"
-                        margin="normal"
-                        label="Description"
-                        variant="outlined"
-                        multiline
-                        minRows={2}
-                        onChange={(e) => setDescription(e.target.value)}
-                        value={description}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                        }}
-                    />
-
-                    <TextField
-                        fullWidth
-                        id="website"
-                        margin="normal"
-                        label="Website"
-                        variant="outlined"
-                        onChange={(e) => setWebsite(e.target.value)}
-                        value={website}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                        }}
-                    />
-
-                    <TextField
-                        fullWidth
-                        id="location"
-                        margin="normal"
-                        label="Location"
-                        variant="outlined"
-                        onChange={(e) => setLocation(e.target.value)}
-                        value={location}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                    borderColor: "#fff",
-                                    opacity: 0.5,
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#fff",
-                                },
-                            },
-                            "& .MuiInputLabel-root": {
-                                color: "#fff",
-                            },
-                            "& .MuiInputBase-input": {
-                                color: "#fff",
-                                opacity: 1,
-                            },
-                        }}
-                    />
-
-                    <Button
-                        variant="contained"
-                        type="submit"
-                        sx={{
-                            width: "100%",
-                            marginTop: "3%",
-                            fontSize: "1.2rem",
-                            backgroundColor: "#65529d",
-                            "&:hover": { backgroundColor: "#618dbd" },
-                        }}
-                    >
-                        {isEditMode ? "Update" : "Add Account"}
-                    </Button>
-
-                    <Box
-                        sx={{
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <Button
-                            onClick={handleBack}
-                            sx={{
-                                marginTop: "5%",
-                                backgroundColor: "#D1D8F0",
-                                color: "#4B0082",
-                                fontSize: "1.2rem",
-                                padding: "5px 32px",
-                                borderRadius: "8px",
-                                "&:hover": {
-                                    backgroundColor: "#A9A9A9",
-                                    color: "#000000",
-                                },
-                            }}
-                        >
-                            Back
-                        </Button>
-                    </Box>
-                </form>
-            </Paper>
+        <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+          <Field label="Username"><input style={inputStyle} value={user} onChange={(e) => setUser(e.target.value)} required disabled={isEditMode} autoComplete="off" /></Field>
+          <Field label="Display name"><input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Foods" /></Field>
+          <Field label={isEditMode ? 'New password' : 'Password'}><input style={inputStyle} type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} required={!isEditMode} autoComplete="new-password" /></Field>
+          <Field label="Confirm password"><input style={inputStyle} type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} required={!isEditMode || pwd.length > 0} autoComplete="new-password" /></Field>
+          <Field label="Website"><input style={inputStyle} value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" /></Field>
+          <Field label="Location"><input style={inputStyle} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, state" /></Field>
         </Box>
-    );
-}
+        <Field label="Description">
+          <textarea style={{ ...inputStyle, minHeight: 96, padding: 14, resize: 'vertical' }} value={description} onChange={(e) => setDescription(e.target.value)} />
+        </Field>
+
+        {pwd !== pwd2 && pwd2 && <span style={{ fontSize: 13, color: colors.alert }}>Passwords do not match.</span>}
+
+        <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column-reverse', sm: 'row' } }}>
+          <button type="submit" disabled={busy} style={{ minHeight: 48, padding: '0 28px', borderRadius: radius.button, border: 0, background: colors.purplePrimary, color: '#fff', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+            {busy ? 'Saving…' : isEditMode ? 'Save changes' : 'Add account'}
+          </button>
+          <button type="button" onClick={() => navigate(-1)} style={{ minHeight: 48, padding: '0 24px', borderRadius: radius.button, border: `1px solid ${colors.border}`, background: 'transparent', color: colors.textPrimary, fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>
+            Cancel
+          </button>
+        </Box>
+      </form>
+    </Box>
+  );
+};
 
 export default AddAccount;

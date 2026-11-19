@@ -1,2 +1,3 @@
-export const SERVER_URL = 'https://final-year-project-133i.onrender.com'
+import { API_BASE } from '../config';
+export const SERVER_URL = API_BASE
 

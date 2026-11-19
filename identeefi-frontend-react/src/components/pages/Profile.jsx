@@ -1,193 +1,54 @@
-import { Box, Paper, Avatar, Typography, Button } from '@mui/material';
-import heroBg from '../../img/herobg.png';
+import { API_BASE } from '../../config';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Box } from '@mui/material';
 import useAuth from '../../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import Avatar from '../shared/Avatar';
 import WalletConnect from './WalletConnect';
+import { colors, radius } from '../../theme/tokens';
+import { ROLE_LABEL } from '../../utils/roles';
+
+const Row = ({ label, children }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '14px 0', borderBottom: `1px solid ${colors.border}` }}>
+    <span style={{ fontSize: 14, color: colors.textSecondary }}>{label}</span>
+    <span style={{ fontSize: 16, overflowWrap: 'anywhere' }}>{children || '-'}</span>
+  </div>
+);
+
 const Profile = () => {
-    const [name, setName] = useState([]);
-    const [description, setDescription] = useState([]);
-    const [role, setRole] = useState([]);
-    const [website, setWebsite] = useState([]);
-    const [location, setLocation] = useState([]);
-    const [image, setImage] = useState({
-        file: [],
-        filepreview: null
-    });
+  const { auth } = useAuth();
+  const [p, setP] = useState(null);
+  const [error, setError] = useState('');
 
-    const { auth } = useAuth()
-    const navigate = useNavigate()
+  useEffect(() => {
+    if (!auth?.user) return;
+    axios.get(`${API_BASE}/profile/${auth.user}`)
+      .then((res) => setP(res.data && res.data[0] ? res.data[0] : {}))
+      .catch((err) => { console.error(err); setError('Could not load your profile. Refresh to try again.'); });
+  }, [auth?.user]);
 
-    const handleBack = () => {
-        navigate(-1)
-    }
-    const getImage = async (imageName) => {
-      setImage(prevState => ({
-          ...prevState,
-          filepreview: `https://final-year-project-133i.onrender.com/file/profile/${imageName}`
-          })
-      )
-  }
-    const handleData = async (e) => {
-        if (!auth?.user) return;
-        try {
-            const res = await axios.get(`https://final-year-project-133i.onrender.com/profile/${auth.user}`);
-            if (res.data && res.data.length > 0) {
-                setName(res.data[0].name || "");
-                setDescription(res.data[0].description || "");
-                setRole(res.data[0].role || "");
-                setWebsite(res.data[0].website || "");
-                setLocation(res.data[0].location || "");
-                if (res.data[0].image) {
-                    getImage(res.data[0].image);
-                }
-            }
-        } catch (err) {
-            console.error("Error loading profile details:", err);
-        }
-    }
-
-    useEffect(() => {
-        if (auth?.user) {
-            handleData();
-        }
-    }, [auth?.user]);
-
-    return (
-        <Box
-          sx={{
-            backgroundImage: `url(${heroBg})`,
-            minHeight: '100vh',
-            backgroundRepeat: 'no-repeat',
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundSize: 'cover',
-            zIndex: -2,
-            overflowY:'scroll'
-          }}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 20,
-              right: 20,
-            }}
-          >
-            <WalletConnect />
-          </Box>
-          <Paper
-            elevation={3}
-            sx={{
-              width: '400px',
-              margin: 'auto',
-              marginTop: '10%',
-              marginBottom: '10%',
-              padding: '3%',
-              backgroundColor: '#161232c4',
-            }}
-          >
-            <Avatar
-              alt={name}
-              src={image.filepreview}
-            
-              sx={{
-                width: 100,
-                height: 100,
-                margin: 'auto',
-                marginBottom: '3%',
-                backgroundColor: '#3f51b5',
-              }}
-            >
-              {name[0]}
-            </Avatar>
-    
-            <Typography
-              variant="h4"
-              sx={{
-                textAlign: 'center',
-                marginBottom: '5%',
-                color: 'white',
-              }}
-            >
-              {name}
-            </Typography>
-    
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: 'center',
-                marginBottom: '3%',
-                color: 'white',
-              }}
-            >
-              Description: {description}
-            </Typography>
-    
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: 'center',
-                marginBottom: '3%',
-                color: 'white',
-              }}
-            >
-              Role: {role}
-            </Typography>
-    
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: 'center',
-                marginBottom: '3%',
-                color: 'white',
-              }}
-            >
-              Website: {website}
-            </Typography>
-    
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: 'center',
-                marginBottom: '3%',
-                color: 'white',
-              }}
-            >
-              Location: {location}
-            </Typography>
-    
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-              <Button
-                onClick={handleBack}
-                sx={{
-                  marginTop: '5%',
-                  backgroundColor: '#D1D8F0', // Light purple background color
-                  color: '#4B0082', // Dark purple text color
-                  fontSize: '1.2rem', // Increase font size
-                  padding: '10px 22px', // Increase padding for a bigger button
-                  borderRadius: '8px', // Add border radius for rounded corners
-                  '&:hover': {
-                    backgroundColor: '#A9A9A9', // Lighter shade of purple on hover
-                    color: '#000000', // Black text color on hover
-                  },
-                }}
-              >
-                Back
-              </Button>
-            </Box>
-          </Paper>
+  const d = p || {};
+  return (
+    <Box sx={{ maxWidth: 640, mx: 'auto', p: { xs: '24px 16px 96px', md: '32px 24px', lg: '40px 48px' } }}>
+      <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: radius.card, background: colors.surface, p: { xs: 2.5, md: 4 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
+          <Avatar name={d.name || auth?.user} image={d.image} size={96} />
+          <div>
+            <h1 style={{ margin: 0, fontSize: 28, lineHeight: '34px', fontWeight: 800 }}>{d.name || auth?.user}</h1>
+            <span style={{ fontSize: 14, color: colors.textSecondary }}>{ROLE_LABEL[d.role || auth?.role]}</span>
+          </div>
         </Box>
-      )
-}
+        {error && <div role="alert" style={{ color: colors.alert, marginTop: 16 }}>{error}</div>}
+        <div style={{ marginTop: 16 }}>
+          <Row label="Description">{d.description}</Row>
+          <Row label="Website">{d.website}</Row>
+          <Row label="Location">{d.location}</Row>
+          <Row label="Username">{auth?.user}</Row>
+        </div>
+        <Box sx={{ mt: 3 }}><WalletConnect /></Box>
+      </Box>
+    </Box>
+  );
+};
 
 export default Profile;

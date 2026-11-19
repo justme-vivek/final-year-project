@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { CssBaseline } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { colors, typography } from './tokens';
+import { colors, typography, breakpoints } from './tokens';
 
 const getDesignTokens = () => ({
+  breakpoints: { values: breakpoints },
   palette: {
     mode: 'dark',
     primary: {

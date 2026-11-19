@@ -1,6 +1,4 @@
-import { Box, Paper, Typography } from '@mui/material';
-import heroBg from "../../img/herobg.png";
-import { TextField, Button, Link } from '@mui/material';
+import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL, GOOGLE_MAPS_KEY, IPFS_GATEWAY, PINATA_API_KEY, PINATA_SECRET } from '../../config';
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import axios from 'axios';
@@ -10,11 +8,14 @@ import dayjs from 'dayjs';
 import useAuth from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import Geocode from "react-geocode";
-import { color } from '@mui/system';
 import WalletConnect from './WalletConnect';
+import PhotoUploader from '../shared/PhotoUploader';
+import TxProgress from '../shared/TxProgress';
+import { colors } from '../../theme/tokens';
+import { PageWrap, PageHead, Card, Field, Notice, Row, btnPrimary, btnGhost, inputStyle, mono } from './productUi';
 
 const getEthereumObject = () => window.ethereum;
-const explorerBaseUrl = 'https://sepolia.etherscan.io/tx/';
+
 /*
  * This function returns the first linked account found.
  * If there is no account linked, it will return null.
@@ -28,7 +29,6 @@ const findMetaMaskAccount = async () => {
         */
         if (!ethereum) {
             console.error("Make sure you have Metamask!");
-            alert("Make sure you have Metamask!");
             return null;
         }
 
@@ -73,9 +73,12 @@ const AddProduct = () => {
     const [fileImg, setFileImg] = useState(null);
 
     const [metadataUrl, setMetadataUrl] = useState('');
+    const [step, setStep] = useState(-1);
+    const [txError, setTxError] = useState('');
+    const [txHash, setTxHash] = useState('');
+    const [done, setDone] = useState(false);
 
 
-    const CONTRACT_ADDRESS = '0x62081f016446585cCC507528cc785980296b4Ccd';
     const contractABI = abi.abi;
 
     const { auth } = useAuth();
@@ -92,7 +95,7 @@ const AddProduct = () => {
     }, []);
 
     useEffect(() => {
-        Geocode.setApiKey('AIzaSyB5MSbxR9Vuj1pPeGvexGvQ3wUel4znfYY')
+        Geocode.setApiKey(GOOGLE_MAPS_KEY)
 
         Geocode.fromLatLng(manuLatitude, manuLongtitude).then(
             (response) => {
@@ -149,18 +152,17 @@ const AddProduct = () => {
         navigate(-1)
     }
 
-    const handleImage = async (e) => {
+    const handleImage = (file) => {
         setImage({
-            ...image,
-            file: e.target.files[0],
-            filepreview: URL.createObjectURL(e.target.files[0])
+            file: file || [],
+            filepreview: file ? URL.createObjectURL(file) : null
         })
     }
 
     const getUsername = async (e) => {
         if (!auth?.user) return;
         try {
-            const res = await axios.get(`https://final-year-project-133i.onrender.com/profile/${auth.user}`);
+            const res = await axios.get(`${API_BASE}/profile/${auth.user}`);
             if (res.data && res.data.length > 0) {
                 setManuName(res.data[0].name || "");
                 setDbLocation(res.data[0].location || "");
@@ -175,7 +177,7 @@ const AddProduct = () => {
         const data = new FormData();
         data.append("image", image.file);
 
-        axios.post("https://final-year-project-133i.onrender.com/upload/product", data, {
+        axios.post(`${API_BASE}/upload/product`, data, {
             headers: { "Content-Type": "multipart/form-data" }
         }).then(res => {
             if (res.data.success === 1) {
@@ -196,11 +198,11 @@ const AddProduct = () => {
                 maxRedirects: 0,
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    pinata_api_key: '',
-                    pinata_secret_api_key: ''
+                    pinata_api_key: PINATA_API_KEY,
+                    pinata_secret_api_key: PINATA_SECRET
                 }
             });
-            return `https://aquamarine-accessible-takin-121.mypinata.cloud/ipfs/${resFile.data.IpfsHash}`;
+            return `${IPFS_GATEWAY}/ipfs/${resFile.data.IpfsHash}`;
         } catch (error) {
             console.warn("Image IPFS upload skipped (no API key or network error):", error.message);
             return null; // graceful fallback — don't throw
@@ -213,8 +215,8 @@ const AddProduct = () => {
         const formData = new FormData();
         formData.append('file', jsonBlob, 'metadata.json');
 
-        const API_KEY = 'fa2b19b73212285f0b63';
-        const API_SECRET = '3eb7e681c6a2bf3ce1f032102cae6842a0a77dccde1afdc198dc375b3993e393';
+        const API_KEY = PINATA_API_KEY;
+        const API_SECRET = PINATA_SECRET;
 
         const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
 
@@ -229,7 +231,7 @@ const AddProduct = () => {
             });
 
             //   setIPFSHASH(response.data.IpfsHash);
-            return `https://aquamarine-accessible-takin-121.mypinata.cloud/ipfs/${response.data.IpfsHash}`;
+            return `${IPFS_GATEWAY}/ipfs/${response.data.IpfsHash}`;
 
         } catch (error) {
             console.error('Error uploading to IPFS', error);
@@ -243,13 +245,14 @@ const AddProduct = () => {
         try {
             // MetaMask is required — no alternative path
             if (!window.ethereum) {
-                alert("MetaMask is required to register products on the blockchain. Please install MetaMask.");
+                setTxError("MetaMask is required to register products. Install MetaMask and try again.");
                 setLoading("");
                 return;
             }
 
             // Request MetaMask account access
             setLoading("Requesting MetaMask account access...");
+            setStep(0);
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const fromAccount = accounts[0];
             // Initialize Web3 with MetaMask provider
@@ -275,6 +278,7 @@ const AddProduct = () => {
             if (metaUrl) setMetadataUrl(metaUrl);
             // Send blockchain transaction via Web3 + MetaMask
             setLoading("Please confirm the transaction in MetaMask...");
+            setStep(1);
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
@@ -300,6 +304,7 @@ const AddProduct = () => {
                     .send({ from: fromAccount, gas: 800000 })
                     .on('transactionHash', (hash) => {
                         txHash = hash;
+                        setStep(2);
                     })
                     .on('receipt', (receipt) => {
                         resolve(receipt);
@@ -315,6 +320,8 @@ const AddProduct = () => {
             });
 
             setLoading(receipt.transactionHash);
+            setTxHash(receipt.transactionHash);
+            setStep(3);
 
             // Save FULL product data to MongoDB now that we have txHash
             await addProductDB({
@@ -339,12 +346,13 @@ const AddProduct = () => {
             const product = await productContract.methods
                 .getProduct(snapshotSerialNumber)
                 .call();
-            alert("Product created and registered successfully! Please download your QR Code below.");
+            setStep(4);
+            setDone(true);
         } catch (error) {
             console.error("Error registering product on blockchain:", error);
             const errMsg = error?.message || "Transaction failed. Please try again.";
-            setLoading("Error: " + errMsg);
-            alert("Transaction Error: " + errMsg);
+            setLoading("");
+            setTxError(errMsg);
         }
     }
 
@@ -359,7 +367,7 @@ const AddProduct = () => {
     // Save full product data to MongoDB
     const addProductDB = async (productData) => {
         try {
-            const res = await axios.post('https://final-year-project-133i.onrender.com/addproduct',
+            const res = await axios.post(`${API_BASE}/addproduct`,
                 JSON.stringify(productData),
                 { headers: { 'Content-Type': 'application/json' } }
             );
@@ -371,7 +379,7 @@ const AddProduct = () => {
     // Returns true if serial number is unique, false otherwise
     const checkUnique = async () => {
         try {
-            const res = await axios.get("https://final-year-project-133i.onrender.com/products/serialNumbers");
+            const res = await axios.get(`${API_BASE}/products/serialNumbers`);
             if (res.data && Array.isArray(res.data)) {
                 const existingSerialNumbers = res.data.map((product) => product.serialnumber);
                 const duplicates = existingSerialNumbers.filter((item) => item === serialNumber);
@@ -398,6 +406,9 @@ const AddProduct = () => {
         const unique = await checkUnique();
         if (unique) {
             if (image.file?.name) uploadImage(image);
+            setTxError('');
+            setDone(false);
+            setStep(0);
             setLoading("Connecting to blockchain...");
             // registerProduct handles DB save internally after tx confirmation (with txHash)
             await registerProduct(e, snapshotSerial);
@@ -406,211 +417,73 @@ const AddProduct = () => {
         }
     }
 
+    const busy = step >= 0 && step < 4 && !txError;
     return (
-        <Box sx={{
-            backgroundImage: `url(${heroBg})`,
-            minHeight: "80vh",
-            backgroundRepeat: "no-repeat",
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            zIndex: -2,
-            overflowY: "scroll"
-        }}>
-            <Box
-                sx={{
-                    position: 'absolute',
-                    top: 20,
-                    right: 20,
-                }}
-            >
-                <WalletConnect />
-            </Box>
-            <Paper elevation={3} sx={{ width: "400px", margin: "auto", marginTop: "10%", marginBottom: "10%", padding: "3%", backgroundColor: "#e3eefc" }}>
-                <Typography
-                    variant="h2"
-                    sx={{
-                        textAlign: "center", marginBottom: "3%",
-                        fontFamily: 'Gambetta', fontWeight: "bold", fontSize: "2.5rem"
-                    }}
-                >
-                    Add Product</Typography>
-                <form onSubmit={handleSubmit}>
-                    <TextField
-                        fullWidth
-                        error={!isUnique}
-                        helperText={!isUnique ? "Serial Number already exists" : ""}
-                        id="serial-number"
-                        margin="normal"
-                        label="Serial Number"
-                        variant="outlined"
-                        inherit="False"
-                        onChange={(e) => setSerialNumber(e.target.value)}
-                        value={serialNumber}
-                    />
+        <PageWrap max={1000}>
+            <PageHead
+                title="Add product"
+                sub="Register a product on the blockchain and get its QR code."
+                right={<WalletConnect />}
+            />
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 24, alignItems: 'start' }}>
+                <Card title="Product details">
+                    <Field label="Serial number" id="serial-number" error={!isUnique ? 'This serial number already exists. Use a different one.' : ''}>
+                        <input id="serial-number" required style={inputStyle} value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
+                    </Field>
+                    <Field label="Name" id="product-name">
+                        <input id="product-name" required style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} />
+                    </Field>
+                    <Field label="Brand" id="product-brand">
+                        <input id="product-brand" required style={inputStyle} value={brand} onChange={(e) => setBrand(e.target.value)} />
+                    </Field>
+                    <Field label="Description" id="product-description">
+                        <textarea id="product-description" rows={3} style={{ ...inputStyle, padding: 12, resize: 'vertical' }} value={description} onChange={(e) => setDescription(e.target.value)} />
+                    </Field>
+                </Card>
 
-                    <TextField
-                        fullWidth
-                        id="product-name"
-                        margin="normal"
-                        label="Name"
-                        variant="outlined"
-                        inherit="False"
-                        onChange={(e) => setName(e.target.value)}
-                        value={name}
-                    />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
+                    <Card title="Product photo">
+                        <PhotoUploader label="Photo" kind="product" file={image.file && image.file.name ? image.file : null} onChange={handleImage} />
+                    </Card>
 
-                    <TextField
-                        fullWidth
-                        id="product-brand"
-                        margin="normal"
-                        label="Brand"
-                        variant="outlined"
-                        inherit="False"
-                        onChange={(e) => setBrand(e.target.value)}
-                        value={brand}
-                    />
-
-                    <TextField
-                        fullWidth
-                        id="product-description"
-                        margin="normal"
-                        label="Description"
-                        variant="outlined"
-                        inherit="False"
-                        multiline
-                        minRows={2}
-                        onChange={(e) => setDescription(e.target.value)}
-                        value={description}
-                    />
-
-
-                    <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ marginTop: "3%", marginBottom: "3%" }}
-                    >
-                        Upload Image
-                        <input
-                            type="file"
-                            hidden
-                            onChange={handleImage}
-                        />
-                    </Button>
-
-                    {image.filepreview !== null ?
-                        <img src={image.filepreview} alt="preview" style={{ width: "100%", height: "100%" }} />
-                        : null}
-
-                    {qrData !== "" ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '3%' }}>
-                        <QRCode
-                            value={qrData}
-                            size={256}
-                            level={"H"}
-                            includeMargin={true}
-                            id="QRCode" />
-
-                    </div> : null}
-
-                    {qrData !== "" ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '3%' }}>
-                        <Button
-                            variant="outlined"
-                            component="label"
-                            fullWidth
-                            sx={{ marginTop: "3%", marginBottom: "3%" }}
-                            onClick={downloadQR}
-                        >
-                            Download
-                        </Button>
-
-                    </div> : null}
-
-                    {metadataUrl && (
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                textAlign: "center", marginTop: "3%"
-                            }}
-                        >
-                            <Link
-                                href={metadataUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                View Metadata on IPFS
-                            </Link>
-                        </Typography>
+                    {(step >= 0 || txError) && (
+                        <Card title="Registration">
+                            <TxProgress
+                                steps={['Connect wallet', 'Confirm in wallet', 'Record on blockchain', 'Save product']}
+                                current={step < 0 ? 0 : step}
+                                error={txError || undefined}
+                            />
+                            {loading && !txHash && !txError && <Notice>{loading}</Notice>}
+                            {txError && <Notice kind="error">{txError}</Notice>}
+                            {txHash && (
+                                <a href={`${EXPLORER_URL}/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: colors.violetText, fontFamily: mono, fontSize: 13, wordBreak: 'break-all' }}>
+                                    View transaction {txHash.slice(0, 10)}...{txHash.slice(-6)}
+                                </a>
+                            )}
+                            {metadataUrl && <a href={metadataUrl} target="_blank" rel="noopener noreferrer" style={{ color: colors.violetText, fontSize: 14 }}>View metadata on IPFS</a>}
+                        </Card>
                     )}
 
+                    {qrData !== '' && (
+                        <Card title="Your QR code">
+                            <Notice kind="success">Product registered. Download the QR code and attach it to the product.</Notice>
+                            <div style={{ alignSelf: 'center', background: '#fff', padding: 8, borderRadius: 12, maxWidth: '100%' }}>
+                                <QRCode value={qrData} size={220} level="H" includeMargin={true} id="QRCode" style={{ maxWidth: '100%', height: 'auto' }} />
+                            </div>
+                            <Row k="Serial number" v={serialNumber} monoV />
+                            <button type="button" style={btnPrimary} onClick={downloadQR}>Download QR code</button>
+                        </Card>
+                    )}
 
-                    {
-                        isUnique ? (
-                            loading !== "" && (
-                                <Typography
-                                    variant="body2"
-                                    sx={{
-                                        textAlign: "center", marginTop: "3%"
-                                    }}
-                                >
-                                    {
-                                        loading.length === 66 ? (
-                                            <Link href={`${explorerBaseUrl}${loading}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                See the Transaction on Block Explorer
-                                            </Link>
-                                        ) : loading
-                                    }
-                                </Typography>
-                            )
-                        ) : (
-                            <p style={{ textAlign: 'center', color: 'red' }}>Product already exists</p>
-
-                        )
-                    }
-
-
-                    <Button
-                        variant="contained"
-                        type="submit"
-                        sx={{ width: "100%", marginTop: "3%", backgroundColor: '#98b5d5', '&:hover': { backgroundColor: '#618dbd' } }}
-                        onClick={getCurrentTimeLocation}
-                    >
-                        Add Product
-                    </Button>
-
-                    <Box
-                        sx={{
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "center",
-                        }}
-                    >
-
-
-                        <Button
-                            onClick={handleBack}
-                            sx={{
-                                marginTop: "5%",
-                            }}
-                        >
-                            Back
-                        </Button>
-
-                    </Box>
-
-                </form>
-
-            </Paper>
-
-
-        </Box>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                        <button type="submit" disabled={busy || done} style={{ ...btnPrimary, flex: '1 1 200px', opacity: busy || done ? 0.6 : 1 }} onClick={getCurrentTimeLocation}>
+                            {busy ? 'Registering...' : 'Add product'}
+                        </button>
+                        <button type="button" style={{ ...btnGhost, flex: '0 0 auto' }} onClick={handleBack}>Back</button>
+                    </div>
+                </div>
+            </form>
+        </PageWrap>
     );
 }
 

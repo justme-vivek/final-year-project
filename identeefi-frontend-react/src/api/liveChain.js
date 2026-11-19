@@ -1,12 +1,11 @@
+import { CONTRACT_ADDRESS, SEPOLIA_RPC as RPC_URL, EXPLORER_URL } from "../config";
+export { CONTRACT_ADDRESS, RPC_URL, EXPLORER_URL };
 // Live homepage data sources: existing Render backend + public Sepolia RPC.
 // Mirrors the read-only patterns already used in pages/Product.jsx and pages/ScannerPage.jsx.
 import axios from "./axios";
 import Web3 from "web3";
 import abi from "../utils/Identeefi.json";
 
-export const CONTRACT_ADDRESS = "0x62081f016446585cCC507528cc785980296b4Ccd";
-export const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-export const EXPLORER_URL = "https://sepolia.etherscan.io";
 
 const publicWeb3 = () => new Web3(RPC_URL);
 

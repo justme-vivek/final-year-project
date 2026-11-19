@@ -1,3 +1,4 @@
+import { WALLETCONNECT_PROJECT_ID } from '../../config';
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 
@@ -11,7 +12,7 @@ import { Provider } from 'react-redux'
 const queryClient = new QueryClient()
 
 // 1. Get projectId at https://cloud.walletconnect.com
-const projectId = '7236c984a38479e85f91b945bd9076a8'
+const projectId = WALLETCONNECT_PROJECT_ID
 if(!projectId){
   throw new Error("Pls provide project id")
 }

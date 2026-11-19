@@ -1,97 +1,27 @@
-import { Box, Paper, Avatar, Typography, Button } from '@mui/material';
-import heroBg from "../../img/herobg.png";
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import PublicShell from '../home/PublicShell';
 
 const FakeProduct = () => {
-    const navigate = useNavigate();
-
-    const handleBack = () => {
-        navigate(-2)
-    }
-
-    return (
-        <Box sx={{
-            backgroundImage: `url(${heroBg})`,
-            minHeight: "80vh",
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            zIndex: -2,
-            overflowY: "scroll"
-        }}>
-
-            <Paper elevation={3} sx={{ width: "400px", margin: "auto", marginTop: "10%", marginBottom: "10%", padding: "3%", backgroundColor: "#e3eefc" }}>
-                <Typography
-                    variant="h4"
-                    sx={{
-                        fontFamily: "Montserrat",
-                        textAlign: "center", marginBottom: "5%", marginTop: "5%", 
-                    }}    
-                >
-                    Product Authentication Failed
-                </Typography>
-                <Typography
-                variant="h5"
-                sx={{
-                    fontFamily: "Montserrat",
-                    textAlign: "center", marginBottom: "5%", marginTop: "5%", 
-                }}   >
-                    We're sorry to inform you that the product you scanned is not authentic. It appears to be a counterfeit.
-                </Typography>
-
-                <Typography
-                    variant="body1"
-                    sx={{
-                        fontFamily: "Montserrat",
-                        textAlign: "center", marginBottom: "5%", marginTop: "5%", 
-                    }}    
-                >
-                    We take counterfeiting very seriously, and we are working to prevent it from happening. We advise you not to use this product, as it may not meet the safety and quality standards of the genuine product. If you have any concerns or questions, please contact the manufacturer of the genuine product for further assistance.
-                </Typography>
-
-                <Typography
-                    variant="body1"
-                    sx={{
-                        fontFamily: "Montserrat",
-                        textAlign: "center", marginBottom: "5%", marginTop: "5%", 
-                    }}    
-                >
-                    Thank you for using our anti-counterfeit system. We hope it has helped you make informed purchasing decisions and protected you from counterfeit products.
-                </Typography>
-
-
-                
-
-                <Box
-                        sx={{
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "center",
-                        }}
-                    >
-
-
-                        <Button
-                            onClick={handleBack}
-                            sx={{
-                                marginTop: "5%",
-                            }}
-                        >
-                            Back
-                        </Button>
-
-                    </Box>    
- 
-            </Paper>
-        </Box>
-
-
-    
-    )
-}
-
+  const navigate = useNavigate();
+  return (
+    <PublicShell>
+      <main className="page">
+        <div className="wrap">
+          <div className="narrow">
+            <div className="verdict-card" role="status" style={{ borderColor: '#E05A6D' }}>
+              <h1 style={{ color: '#E05A6D' }}>We couldn't verify this product</h1>
+              <p>No matching record exists on the blockchain for this code. The product may be counterfeit, or the code may have been misread.</p>
+              <p>Don't use the product if it affects your health or safety. Try scanning again in better light, or contact the manufacturer of the genuine product.</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+                <Link to="/scanner" className="btn">Scan again</Link>
+                <button className="btn ghost" onClick={() => navigate('/')}>Back to home</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </PublicShell>
+  );
+};
 export default FakeProduct;
