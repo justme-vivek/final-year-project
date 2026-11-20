@@ -9,7 +9,7 @@ export const config = createConfig({
   chains: [mainnet, base],
   connectors: [
     injected(),
-    walletConnect({ projectId }),
+    ...(projectId ? [walletConnect({ projectId })] : []),
     safe(),
   ],
   transports: {

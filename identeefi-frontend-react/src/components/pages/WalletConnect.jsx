@@ -12,9 +12,6 @@ const queryClient = new QueryClient()
 
 // 1. Get projectId at https://cloud.walletconnect.com
 const projectId = WALLETCONNECT_PROJECT_ID
-if(!projectId){
-  throw new Error("Pls provide project id")
-}
 // 2. Create wagmiConfig
 const metadata = {
   name: 'Web3Modal',
@@ -39,21 +36,23 @@ const vanarChain = {
 export const chains = [mainnet, arbitrum,polygon,sepolia,vanarChain,bscTestnet]
 export const config = defaultWagmiConfig({
   chains,
-  projectId,
+  ...(projectId ? { projectId } : {}),
   metadata,
   enableEmail: true
  // Optional - Override createConfig parameters
 })
 
 // 3. Create modal
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  allowUnsupportedChain: true,
-  themeMode:'dark',
-  enableAnalytics: true, // Optional - defaults to your Cloud configuration
-  enableOnramp: true // Optional - false as default
-})
+if (projectId) {
+  createWeb3Modal({
+    wagmiConfig: config,
+    projectId,
+    allowUnsupportedChain: true,
+    themeMode:'dark',
+    enableAnalytics: true, // Optional - defaults to your Cloud configuration
+    enableOnramp: true // Optional - false as default
+  })
+}
 
 function WalletConnect({onClick}) {
 const {isConnected,address,status} =  useAccount({
