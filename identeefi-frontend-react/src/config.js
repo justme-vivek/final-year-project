@@ -8,5 +8,3 @@ export const SEPOLIA_RPC = env.VITE_SEPOLIA_RPC || 'https://ethereum-sepolia-rpc
 export const EXPLORER_URL = 'https://sepolia.etherscan.io';
 export const GOOGLE_MAPS_KEY = env.VITE_GOOGLE_MAPS_KEY || '';
 export const WALLETCONNECT_PROJECT_ID = env.VITE_WALLETCONNECT_PROJECT_ID || '';
-export const WALLETCONNECT_PROJECT_ID_BUTTONS = env.VITE_WALLETCONNECT_PROJECT_ID_BUTTONS || WALLETCONNECT_PROJECT_ID;
-export const IPFS_GATEWAY = (env.VITE_IPFS_GATEWAY || '').replace(/\/$/, '');
