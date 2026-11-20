@@ -238,7 +238,7 @@ const AddProduct = () => {
                 brand,
                 snapshotSerialNumber,
                 description.replace(/,/g, ';'),
-                imageUrl || '',
+                (imageUrl || '').split('/ipfs/')[1] || imageUrl || '', // store only the short IPFS id on-chain: less storage, less gas
                 manuName,
                 manuLocation || dbLocation || "Manufacturer Location, Unknown",
                 manuDate.toString(),
