@@ -1,4 +1,4 @@
-import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL, GOOGLE_MAPS_KEY, IPFS_GATEWAY, PINATA_API_KEY, PINATA_SECRET } from '../../config';
+import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL, GOOGLE_MAPS_KEY } from '../../config';
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import axios from 'axios';
@@ -176,68 +176,13 @@ const AddProduct = () => {
     }
 
 
-    const uploadImage = async (image) => {
-        const data = new FormData();
-        data.append("image", image.file);
-
-        axios.post(`${API_BASE}/upload/product`, data, {
-            headers: { "Content-Type": "multipart/form-data" }
-        }).then(res => {
-            if (res.data.success === 1) {
-            }
-        })
-    }
-
-
-    const uploadImageToIPFS = async (imageFile) => {
-        // If no valid image file, skip upload
-        if (!imageFile || !imageFile.name) return null;
-
-        const formData = new FormData();
-        formData.append('file', imageFile);
-
-        try {
-            const resFile = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
-                maxRedirects: 0,
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    pinata_api_key: PINATA_API_KEY,
-                    pinata_secret_api_key: PINATA_SECRET
-                }
-            });
-            return `${IPFS_GATEWAY}/ipfs/${resFile.data.IpfsHash}`;
-        } catch (error) {
-            console.warn("Image IPFS upload skipped (no API key or network error):", error.message);
-            return null; // graceful fallback — don't throw
-        }
-    }
-
     const uploadMetadataToIPFS = async (metadata) => {
-        const jsonBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json' });
-
-        const formData = new FormData();
-        formData.append('file', jsonBlob, 'metadata.json');
-
-        const API_KEY = PINATA_API_KEY;
-        const API_SECRET = PINATA_SECRET;
-
-        const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
-
         try {
-            const response = await axios.post(url, formData, {
-                maxContentLength: "Infinity",
-                headers: {
-                    "Content-Type": `multipart/form-data; boundary=${formData._boundary}`,
-                    'pinata_api_key': API_KEY,
-                    'pinata_secret_api_key': API_SECRET
-                }
-            });
-
-            //   setIPFSHASH(response.data.IpfsHash);
-            return `${IPFS_GATEWAY}/ipfs/${response.data.IpfsHash}`;
-
+            const file = new File([JSON.stringify(metadata)], 'metadata.json', { type: 'application/json' });
+            return await pinFile(file);
         } catch (error) {
-            console.error('Error uploading to IPFS', error);
+            console.error('Error uploading metadata to IPFS', error);
+            return '';
         }
     }
 

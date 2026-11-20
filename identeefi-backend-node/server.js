@@ -25,22 +25,6 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('Connected to MongoDB successfully'))
     .catch((err) => console.error('MongoDB connection error:', err));
 
-// product image storage
-const storageProduct = multer.diskStorage({
-    destination: path.join(__dirname, 'public/uploads/product'),
-    filename: (req, file, cb) => {
-        cb(null, file.originalname);
-    }
-})
-
-// profile image storage
-const storageProfile = multer.diskStorage({
-    destination: path.join(__dirname, 'public/uploads/profile'),
-    filename: (req, file, cb) => {
-        cb(null, file.originalname);
-    }
-})
-
 // ==================== AUTH ROUTES ====================
 
 const saltRounds = 10;
@@ -227,49 +211,13 @@ app.delete('/profile/:username', async (req, res) => {
 
 // ==================== IMAGE UPLOAD ROUTES ====================
 
-// Upload profile image
-app.post('/upload/profile', (req, res) => {
-    let upload = multer({ storage: storageProfile }).single('image');
-
-    upload(req, res, (err) => {
-        if (!req.file) {
-            return res.send('Please select an image to upload')
-        } else if (err instanceof multer.MulterError) {
-            return res.send(err);
-        } else if (err) {
-            return res.send(err);
-        }
-    })
-})
-
-// Upload product image
-app.post('/upload/product', (req, res) => {
-    let upload = multer({ storage: storageProduct }).single('image');
-
-    upload(req, res, (err) => {
-        if (!req.file) {
-            return res.send('Please select an image to upload')
-        } else if (err instanceof multer.MulterError) {
-            return res.send(err);
-        } else if (err) {
-            return res.send(err);
-        }
-    })
-})
-
-// Serve profile image
-app.get('/file/profile/:fileName', function (req, res) {
-    const { fileName } = req.params;
-    const filePath = path.join(__dirname, 'public/uploads/profile', fileName);
-    res.sendFile(filePath);
-});
-
-// Serve product image
-app.get('/file/product/:fileName', function (req, res) {
-    const { fileName } = req.params;
-    const filePath = path.join(__dirname, 'public/uploads/product', fileName);
-    res.sendFile(filePath);
-});
+// Images are no longer stored on this server's disk (Render's disk is temporary).
+// The frontend uploads photos to IPFS through Pinata and saves the resulting URL in the database.
+const imagesMoved = (req, res) => res.status(410).send({ error: 'Image uploads moved to IPFS (Pinata). Upload from the app.' });
+app.post('/upload/profile', imagesMoved);
+app.post('/upload/product', imagesMoved);
+app.get('/file/profile/:fileName', imagesMoved);
+app.get('/file/product/:fileName', imagesMoved);
 
 // ==================== PRODUCT ROUTES ====================
 
