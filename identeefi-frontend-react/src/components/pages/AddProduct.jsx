@@ -4,7 +4,7 @@ import Web3 from 'web3';
 import axios from 'axios';
 import abi from '../../utils/Identeefi.json';
 import QRCode from 'qrcode.react';
-import { pinFile } from '../../utils/pinata';
+import { pinFile, pinJson } from '../../utils/pinata';
 import QrModal from '../shared/QrModal';
 import dayjs from 'dayjs';
 import useAuth from '../../hooks/useAuth';
@@ -178,8 +178,7 @@ const AddProduct = () => {
 
     const uploadMetadataToIPFS = async (metadata) => {
         try {
-            const file = new File([JSON.stringify(metadata)], 'metadata.json', { type: 'application/json' });
-            return await pinFile(file);
+            return await pinJson(metadata);
         } catch (error) {
             console.error('Error uploading metadata to IPFS', error);
             return '';

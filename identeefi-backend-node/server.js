@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 // Import Mongoose models
 const Auth = require('./models/Auth');
@@ -13,8 +15,11 @@ const Profile = require('./models/Profile');
 const Product = require('./models/Product');
 
 const app = express();
-app.use(bodyParser.json());
-app.use(cors());
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(bodyParser.json({ limit: '200kb' }));
+// Set CORS_ORIGINS="https://your-site.com,http://localhost:5173" in production. Empty allows any origin (development only).
+const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean);
+app.use(cors(allowedOrigins.length ? { origin: allowedOrigins } : undefined));
 
 const port = 5000;
 
@@ -211,9 +216,60 @@ app.delete('/profile/:username', async (req, res) => {
 
 // ==================== IMAGE UPLOAD ROUTES ====================
 
-// Images are no longer stored on this server's disk (Render's disk is temporary).
-// The frontend uploads photos to IPFS through Pinata and saves the resulting URL in the database.
-const imagesMoved = (req, res) => res.status(410).send({ error: 'Image uploads moved to IPFS (Pinata). Upload from the app.' });
+// ==================== IPFS (PINATA) UPLOADS ====================
+// Images never touch this server's disk. The browser sends the file here, the server pins it to IPFS
+// with the Pinata JWT (kept in this server's env, never sent to the browser) and returns the gateway URL.
+const PINATA_JWT = process.env.PINATA_JWT || '';
+const IPFS_GATEWAY = (process.env.IPFS_GATEWAY || 'https://gateway.pinata.cloud').replace(/\/$/, '');
+const ALLOWED_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+const pinLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many uploads. Try again later.' } });
+const memUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, cb) => cb(ALLOWED_IMAGES.includes(file.mimetype) ? null : new Error('Only JPG, PNG, WebP or GIF images are allowed.'), ALLOWED_IMAGES.includes(file.mimetype)),
+});
+
+const pinToPinata = async (buffer, filename, contentType) => {
+    if (!PINATA_JWT) throw Object.assign(new Error('Server is missing PINATA_JWT.'), { status: 500 });
+    const form = new FormData();
+    form.append('file', new Blob([buffer], { type: contentType }), filename);
+    const r = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', { method: 'POST', headers: { Authorization: `Bearer ${PINATA_JWT}` }, body: form });
+    if (!r.ok) throw Object.assign(new Error('Pinata rejected the upload.'), { status: 502 });
+    const json = await r.json();
+    return `${IPFS_GATEWAY}/ipfs/${json.IpfsHash}`;
+};
+
+// Upload a photo (product or profile). Field name: image. Returns { url }.
+app.post('/pin/image', pinLimiter, (req, res) => {
+    memUpload.single('image')(req, res, async (err) => {
+        if (err) return res.status(400).send({ error: err.message });
+        if (!req.file) return res.status(400).send({ error: 'Please select an image to upload.' });
+        try {
+            const url = await pinToPinata(req.file.buffer, req.file.originalname, req.file.mimetype);
+            res.send({ url });
+        } catch (e) {
+            console.error('Pin image failed:', e.message);
+            res.status(e.status || 500).send({ error: e.message });
+        }
+    });
+});
+
+// Upload product metadata JSON (max 20 KB). Returns { url }.
+app.post('/pin/json', pinLimiter, async (req, res) => {
+    try {
+        const body = JSON.stringify(req.body || {});
+        if (!req.body || typeof req.body !== 'object' || body.length > 20000) return res.status(400).send({ error: 'Invalid metadata.' });
+        const url = await pinToPinata(Buffer.from(body), 'metadata.json', 'application/json');
+        res.send({ url });
+    } catch (e) {
+        console.error('Pin json failed:', e.message);
+        res.status(e.status || 500).send({ error: e.message });
+    }
+});
+
+// Old disk-based routes are gone.
+const imagesMoved = (req, res) => res.status(410).send({ error: 'Image uploads moved to IPFS. Use /pin/image.' });
 app.post('/upload/profile', imagesMoved);
 app.post('/upload/product', imagesMoved);
 app.get('/file/profile/:fileName', imagesMoved);
