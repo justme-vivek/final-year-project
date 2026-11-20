@@ -13,7 +13,7 @@ import useAuth from '../../hooks/useAuth';
 export const useWalletGate = () => {
   // The only source of truth is the wallet modal's own connection. Nothing is assumed from earlier visits.
   const { status } = useAccount({ config });
-  return { connected: status === 'connected' };
+  return { connected: status === 'connected', connecting: status === 'connecting' || status === 'reconnecting' };
 };
 
 const Action = ({ title, text, onClick, disabled, primary }) => (
@@ -32,7 +32,7 @@ const Action = ({ title, text, onClick, disabled, primary }) => (
 const RoleHome = ({ heading, actions }) => {
   const navigate = useNavigate();
   const { auth } = useAuth();
-  const { connected } = useWalletGate();
+  const { connected, connecting } = useWalletGate();
   const [products, setProducts] = useState([]);
   useEffect(() => {
     axios.get(`${API_BASE}/productAll`).then((r) => setProducts((r.data || []).slice(-4).reverse())).catch(() => {});
@@ -51,17 +51,23 @@ const RoleHome = ({ heading, actions }) => {
         </Box>
         {auth?.role !== 'admin' && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: colors.textPrimary, background: colors.surfaceRaised, border: `1px solid ${connected ? colors.verified : colors.border}`, borderRadius: 100, padding: '8px 14px', minHeight: 40, boxSizing: 'border-box' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: connected ? colors.verified : colors.textMuted }} />
-              {connected ? 'Wallet connected' : 'Wallet not connected'}
-            </span>
+            {(() => {
+              const tone = connected ? colors.verified : connecting ? colors.textSecondary : colors.alert;
+              const label = connected ? 'Wallet connected' : connecting ? 'Connecting…' : 'Wallet disconnected';
+              return (
+                <span role="status" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: tone, background: colors.surfaceRaised, border: `1px solid ${tone}`, borderRadius: 100, padding: '8px 14px', minHeight: 40, boxSizing: 'border-box' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: tone }} />
+                  {label}
+                </span>
+              );
+            })()}
             <WalletConnect />
           </Box>
         )}
       </Box>
 
       {auth?.role !== 'admin' && !connected && (
-        <span style={{ fontSize: 14, color: colors.textSecondary }}>Connect your wallet to unlock the actions marked below.</span>
+        <span style={{ fontSize: 14, color: colors.textSecondary }}>Connect your wallet to unlock the actions below. The wallet disconnects every time you sign in or out.</span>
       )}
 
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: `repeat(${Math.min(actions.length, 3)}, 1fr)` } }}>
