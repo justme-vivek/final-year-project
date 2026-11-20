@@ -10,32 +10,10 @@ import { colors, radius } from '../../theme/tokens';
 import { ROLE_LABEL } from '../../utils/roles';
 import useAuth from '../../hooks/useAuth';
 
-const getEthereumObject = () => window.ethereum;
-
 export const useWalletGate = () => {
-  const { isConnected } = useAccount({ config });
-  const [connected, setConnected] = useState(() => sessionStorage.getItem('walletConnected') === 'true');
-  useEffect(() => { sessionStorage.setItem('walletConnected', connected.toString()); }, [connected]);
-  useEffect(() => {
-    const clear = () => sessionStorage.removeItem('walletConnected');
-    window.addEventListener('beforeunload', clear);
-    return () => window.removeEventListener('beforeunload', clear);
-  }, []);
-  useEffect(() => {
-    const eth = getEthereumObject();
-    if (!eth) return;
-    eth.request({ method: 'eth_accounts' }).then((a) => { if (a && a.length) setConnected(true); }).catch(() => {});
-  }, []);
-  useEffect(() => { if (isConnected) setConnected(true); }, [isConnected]);
-  const connect = async () => {
-    try {
-      const eth = getEthereumObject();
-      if (!eth) return;
-      const a = await eth.request({ method: 'eth_requestAccounts' });
-      if (a && a.length) setConnected(true);
-    } catch (e) { console.error(e); }
-  };
-  return { connected, connect };
+  // The only source of truth is the wallet modal's own connection. Nothing is assumed from earlier visits.
+  const { status } = useAccount({ config });
+  return { connected: status === 'connected' };
 };
 
 const Action = ({ title, text, onClick, disabled, primary }) => (
@@ -54,7 +32,7 @@ const Action = ({ title, text, onClick, disabled, primary }) => (
 const RoleHome = ({ heading, actions }) => {
   const navigate = useNavigate();
   const { auth } = useAuth();
-  const { connected, connect } = useWalletGate();
+  const { connected } = useWalletGate();
   const [products, setProducts] = useState([]);
   useEffect(() => {
     axios.get(`${API_BASE}/productAll`).then((r) => setProducts((r.data || []).slice(-4).reverse())).catch(() => {});
@@ -77,7 +55,7 @@ const RoleHome = ({ heading, actions }) => {
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: connected ? colors.verified : colors.textMuted }} />
               {connected ? 'Wallet connected' : 'Wallet not connected'}
             </span>
-            <WalletConnect onClick={connect} />
+            <WalletConnect />
           </Box>
         )}
       </Box>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
 import useAuth from '../../hooks/useAuth';
+import { disconnectWallet } from '../../utils/wallet';
 import Logo from '../shared/Logo';
 import './public.css';
 
@@ -44,6 +45,7 @@ export default function Login() {
           const p = await axios.get(`/profile/${res.data.username}`);
           image = p?.data?.[0]?.image || '';
         } catch (e2) { /* avatar falls back to initials */ }
+        await disconnectWallet(); // every sign-in starts with the wallet disconnected
         setSignedRole(role);
         setAuth({ user: res.data.username, role, image, token });
         setUser('');

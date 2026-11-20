@@ -2,11 +2,9 @@ import { WALLETCONNECT_PROJECT_ID } from '../../config';
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 
-import { WagmiProvider, useAccount } from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { arbitrum, mainnet, polygon, sepolia,bscTestnet } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useEffect,useRef} from 'react'
-import { Provider } from 'react-redux'
 // 0. Setup queryClient
 const queryClient = new QueryClient()
 
@@ -14,10 +12,10 @@ const queryClient = new QueryClient()
 const projectId = WALLETCONNECT_PROJECT_ID
 // 2. Create wagmiConfig
 const metadata = {
-  name: 'Web3Modal',
-  description: 'Web3Modal Example',
-  url: 'https://web3modal.com', // origin must match your domain & subdomain
-  icons: ['https://avatars.githubusercontent.com/u/37784886']
+  name: 'AuthentiScan',
+  description: 'Check where a product has been, recorded on the blockchain',
+  url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
+  icons: []
 }
 
 const vanarChain = {
@@ -38,7 +36,7 @@ export const config = defaultWagmiConfig({
   chains,
   ...(projectId ? { projectId } : {}),
   metadata,
-  enableEmail: true
+  enableEmail: false
  // Optional - Override createConfig parameters
 })
 
@@ -48,44 +46,22 @@ if (projectId) {
     wagmiConfig: config,
     projectId,
     allowUnsupportedChain: true,
+    defaultChain: sepolia,
     themeMode:'dark',
-    enableAnalytics: true, // Optional - defaults to your Cloud configuration
-    enableOnramp: true // Optional - false as default
+    enableAnalytics: false,
+    enableOnramp: false
   })
 }
 
-function WalletConnect({onClick}) {
-const {isConnected,address,status} =  useAccount({
-  config
-});
-
-  const buttonRef = useRef(null);
-
-  useEffect(() => {
-    if (buttonRef.current) {
-      buttonRef.current.addEventListener('click', onClick);
-    }
-    return () => {
-      if (buttonRef.current) {
-        buttonRef.current.removeEventListener('click', onClick);
-      }
-    };
-  }, [onClick]);
-
-const handleClick =()=>{
-
-}
-
-
+function WalletConnect() {
+  // The modal button handles connecting by itself. Do not also request accounts from the wallet here,
+  // because two requests at once make MetaMask answer "Connection declined".
   return (
-
-
     <WagmiProvider config={config}>
-    <QueryClientProvider client={queryClient}>
-   
-      <w3m-button ref={buttonRef} onClick={handleClick} size='md'/>
-    </QueryClientProvider>
-  </WagmiProvider>
+      <QueryClientProvider client={queryClient}>
+        <w3m-button size="md" balance="hide" />
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE } from '../config';
+import { disconnectWallet } from '../utils/wallet';
 
 // Sends the sign-in token with every request to our backend, and signs the user out when the token is rejected.
 const readAuth = () => {
@@ -23,7 +24,7 @@ const attach = (instance) => {
       const url = err?.config?.url || '';
       if (err?.response?.status === 401 && !url.includes('/login') && readAuth().token) {
         try { sessionStorage.removeItem('auth'); } catch (e) { /* ignore */ }
-        window.location.assign('/login');
+        disconnectWallet().finally(() => window.location.assign('/login'));
       }
       return Promise.reject(err);
     }

@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import useAuth from '../../hooks/useAuth';
+import { disconnectWallet } from '../../utils/wallet';
 import Logo from './Logo';
 import Avatar from './Avatar';
 import { colors } from '../../theme/tokens';
@@ -24,7 +25,7 @@ const AppShell = () => {
   const { auth, setAuth } = useAuth();
   const navigate = useNavigate();
   const items = NAV_BY_ROLE[auth?.role] || [];
-  const signOut = () => { setAuth({}); navigate('/login'); };
+  const signOut = async () => { await disconnectWallet(); setAuth({}); navigate('/login'); };
 
   const link = (bp) => ({ isActive }) => ({
     display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', borderRadius: 10, minHeight: 44,
