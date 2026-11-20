@@ -63,7 +63,7 @@ const Product = () => {
         if (!imageName) return;
         setImage(prevState => ({
             ...prevState,
-            filepreview: `${API_BASE}/file/product/${imageName}`
+            filepreview: /^https?:/.test(imageName) ? imageName : `${API_BASE}/file/product/${imageName}`
             })
         )
     }
@@ -88,7 +88,7 @@ const Product = () => {
                 setName(res.data.name || "");
                 setBrand(res.data.brand || "");
                 setDescription((res.data.description || "").replace(/;/g, ","));
-                getImage(res.data.image || "");
+                getImage(res.data.imageUrl || res.data.image || "");
                 setImageName(res.data.image || "");
                 setProof({ txHash: res.data.txHash || "", metadataUrl: res.data.metadataUrl || "" });
                 serverDataLoaded = true;

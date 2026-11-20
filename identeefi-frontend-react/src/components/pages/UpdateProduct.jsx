@@ -59,7 +59,7 @@ const UpdateProduct = () => {
         if (!imageName) return;
         setImage(prevState => ({
             ...prevState,
-            filepreview: `${API_BASE}/file/product/${imageName}`
+            filepreview: /^https?:/.test(imageName) ? imageName : `${API_BASE}/file/product/${imageName}`
             })
         )
     }
@@ -82,7 +82,7 @@ const UpdateProduct = () => {
                 setName(res.data.name || "");
                 setBrand(res.data.brand || "");
                 setDescription((res.data.description || "").replace(/;/g, ","));
-                getImage(res.data.image || "");
+                getImage(res.data.imageUrl || res.data.image || "");
                 serverDataLoaded = true;
             }
         } catch (serverErr) {

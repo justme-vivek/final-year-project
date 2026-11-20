@@ -75,7 +75,7 @@ const ProductsPage = () => {
             {rows.map((p) => (
               <div key={p.serialNumber} style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                  <Avatar kind="product" name={p.name} image={p.image} size={56} />
+                  <Avatar kind="product" name={p.name} image={p.imageUrl || p.image} size={56} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
                     <div style={{ fontSize: 13, color: colors.textSecondary }}>{p.brand}</div>
@@ -94,7 +94,7 @@ const ProductsPage = () => {
             {rows.map((p) => (
               <div key={p.serialNumber} style={{ border: `1px solid ${colors.border}`, borderRadius: radius.card, background: colors.surface, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <Avatar kind="product" name={p.name} image={p.image} size={64} />
+                  <Avatar kind="product" name={p.name} image={p.imageUrl || p.image} size={64} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 16, fontWeight: 800 }}>{p.name}</div>
                     <div style={{ fontSize: 14, color: colors.textSecondary }}>{p.brand}</div>

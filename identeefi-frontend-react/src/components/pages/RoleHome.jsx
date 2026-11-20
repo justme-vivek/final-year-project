@@ -101,7 +101,7 @@ const RoleHome = ({ heading, actions }) => {
             <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' } }}>
               {products.map((p) => (
                 <div key={p.serialNumber} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: `1px solid ${colors.border}`, borderRadius: radius.card, background: colors.surface, minWidth: 0 }}>
-                  <Avatar kind="product" name={p.name} image={p.image} size={56} />
+                  <Avatar kind="product" name={p.name} image={p.imageUrl || p.image} size={56} />
                   <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <span style={{ fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                     <span style={{ fontSize: 13, color: colors.textSecondary, fontFamily: "'IBM Plex Mono', monospace" }}>{p.serialNumber}</span>
