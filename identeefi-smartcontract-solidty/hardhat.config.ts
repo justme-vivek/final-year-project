@@ -42,12 +42,8 @@ if (!process.env.PRIVATE_KEY) {
   privateKey = process.env.PRIVATE_KEY;
 }
 
-let infuraApiKey: string;
-if (!process.env.INFURA_API_KEY) {
-  throw new Error("Please set your INFURA_API_KEY in a .env file");
-} else {
-  infuraApiKey = process.env.INFURA_API_KEY;
-}
+// Infura is optional. Only the legacy networks that fall through to the Infura URL below need it.
+const infuraApiKey: string = process.env.INFURA_API_KEY || "";
 
 function createTestnetConfig(network: keyof typeof chainIds): NetworkUserConfig {
   if (network == "bsctestnet") {
@@ -100,7 +96,7 @@ function createTestnetConfig(network: keyof typeof chainIds): NetworkUserConfig 
     };
   }
   else if(network == "sepolia"){
-    const url: string = "https://sepolia.infura.io/v3/";
+    const url: string = process.env.SEPOLIA_RPC || "https://ethereum-sepolia-rpc.publicnode.com";
     const privateKey:any = process.env.PRIVATE_KEY;
     return {
       accounts: [privateKey],
