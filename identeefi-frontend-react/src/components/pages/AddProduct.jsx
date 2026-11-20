@@ -4,6 +4,7 @@ import Web3 from 'web3';
 import axios from 'axios';
 import abi from '../../utils/Identeefi.json';
 import QRCode from 'qrcode.react';
+import { pinFile } from '../../utils/pinata';
 import QrModal from '../shared/QrModal';
 import dayjs from 'dayjs';
 import useAuth from '../../hooks/useAuth';
@@ -263,7 +264,7 @@ const AddProduct = () => {
 
             // Upload image to IPFS (optional — skipped if no API key)
             setLoading("Uploading image to IPFS...");
-            const imageUrl = await uploadImageToIPFS(image.file);
+            const imageUrl = image.file?.name ? await pinFile(image.file) : '';
             // Upload metadata to IPFS
             setLoading("Uploading metadata to IPFS...");
             const metadata = {
@@ -298,7 +299,7 @@ const AddProduct = () => {
                         brand,
                         snapshotSerialNumber,
                         description.replace(/,/g, ';'),
-                        image.file?.name || '',
+                        imageUrl || '',
                         manuName,
                         manuLocation || dbLocation || "Manufacturer Location, Unknown",
                         manuDate.toString()
@@ -331,7 +332,7 @@ const AddProduct = () => {
                 name,
                 brand,
                 description,
-                image: image.file?.name || '',
+                image: imageUrl || '',
                 imageUrl: imageUrl || '',
                 metadataUrl: metaUrl || '',
                 manuName,
@@ -407,7 +408,6 @@ const AddProduct = () => {
         // Use returned value — avoids React stale state closure bug
         const unique = await checkUnique();
         if (unique) {
-            if (image.file?.name) uploadImage(image);
             setTxError('');
             setDone(false);
             setStep(0);

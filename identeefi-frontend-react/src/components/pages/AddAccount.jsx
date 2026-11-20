@@ -1,6 +1,7 @@
 import { API_BASE } from '../../config';
 import React, { useRef, useState, useEffect } from 'react';
 import { Box } from '@mui/material';
+import { pinFile } from '../../utils/pinata';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PhotoUploader from '../shared/PhotoUploader';
@@ -58,11 +59,6 @@ const AddAccount = () => {
 
   useEffect(() => { setErrMsg(''); }, [user, pwd, pwd2]);
 
-  const uploadImage = async (file) => {
-    const data = new FormData();
-    data.append('image', file);
-    await axios.post(`${API_BASE}/upload/profile`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
-  };
 
   const reset = () => {
     setUser(''); setPwd(''); setPwd2(''); setRole(ROLE_OPTIONS[0].id); setName('');
@@ -75,25 +71,25 @@ const AddAccount = () => {
     setBusy(true);
     setOkMsg('');
     try {
+      const photoUrl = photo ? await pinFile(photo) : (isEditMode ? editUser.image : '');
       const profileData = {
         username: user, name, description, website, location,
-        image: photo?.name || (isEditMode ? editUser.image : ''),
+        image: photoUrl || '',
         role,
       };
       if (isEditMode) {
         if (pwd) profileData.password = pwd;
         await axios.put(`${API_BASE}/profile/${user}`, profileData, { headers: { 'Content-Type': 'application/json' } });
-        if (photo) await uploadImage(photo);
         navigate('/manage-account');
         return;
       }
       await axios.post(`${API_BASE}/addaccount`, JSON.stringify({ username: user, password: pwd, role }), { headers: { 'Content-Type': 'application/json' } });
       await axios.post(`${API_BASE}/addprofile`, profileData, { headers: { 'Content-Type': 'application/json' } });
-      if (photo) await uploadImage(photo);
       setOkMsg(`Account created for ${name || user}.`);
       reset();
     } catch (err) {
-      if (!err?.response) setErrMsg('The server is not responding. Try again in a moment.');
+      if (!err?.response && err?.message && /Pinata|IPFS/.test(err.message)) setErrMsg(err.message);
+      else if (!err?.response) setErrMsg('The server is not responding. Try again in a moment.');
       else if (err.response.status === 400) setErrMsg('That username is taken or a field is missing. Check the form and try again.');
       else if (err.response.status === 401) setErrMsg('You are not allowed to do this. Sign in as admin.');
       else setErrMsg('Could not save the account. Try again later.');
