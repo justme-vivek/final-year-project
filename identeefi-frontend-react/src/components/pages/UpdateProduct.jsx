@@ -1,6 +1,7 @@
 import { API_BASE, CONTRACT_ADDRESS, SEPOLIA_RPC } from '../../config';
 import { useLocation, useNavigate } from 'react-router-dom';
 import abi from '../../utils/Identeefi.json';
+import { productPhotoUrl } from '../../utils/photos';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import useAuth from '../../hooks/useAuth';
@@ -59,7 +60,7 @@ const UpdateProduct = () => {
         if (!imageName) return;
         setImage(prevState => ({
             ...prevState,
-            filepreview: /^https?:/.test(imageName) ? imageName : `${API_BASE}/file/product/${imageName}`
+            filepreview: productPhotoUrl(imageName)
             })
         )
     }

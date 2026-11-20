@@ -1,6 +1,6 @@
 import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL, GOOGLE_MAPS_KEY } from '../../config';
 import { useEffect, useState } from 'react';
-import { writeContract, readContract } from '../../utils/chain';
+import { writeContract, readContract, sendWithGas } from '../../utils/chain';
 import axios from 'axios';
 import abi from '../../utils/Identeefi.json';
 import QRCode from 'qrcode.react';
@@ -233,7 +233,7 @@ const AddProduct = () => {
             }
 
             const productContract = writeContract();
-            const tx = await productContract.registerProduct(
+            const tx = await sendWithGas(productContract, 'registerProduct', [
                 name,
                 brand,
                 snapshotSerialNumber,
@@ -242,8 +242,7 @@ const AddProduct = () => {
                 manuName,
                 manuLocation || dbLocation || "Manufacturer Location, Unknown",
                 manuDate.toString(),
-                { gasLimit: 800000 }
-            );
+            ]);
             setStep(2);
             let receipt = { transactionHash: tx.hash };
             try {

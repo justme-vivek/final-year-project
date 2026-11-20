@@ -1,7 +1,7 @@
 import { API_BASE, CONTRACT_ADDRESS, GOOGLE_MAPS_KEY, SEPOLIA_RPC } from '../../config';
 import { useEffect, useState } from 'react';
 import useAuth from '../../hooks/useAuth';
-import { readContract, writeContract } from '../../utils/chain';
+import { readContract, writeContract, sendWithGas } from '../../utils/chain';
 import axios from 'axios';
 import Geocode from "react-geocode";
 import dayjs from 'dayjs';
@@ -161,14 +161,13 @@ const UpdateProductDetails = () => {
             }
 
             setStep(1);
-            const registerTxn = await productContract.addProductHistory(
+            const registerTxn = await sendWithGas(productContract, 'addProductHistory', [
                 cleanSerial,
                 finalName,
                 finalLocation,
                 finalDate,
                 isSold,
-                { gasLimit: 500000 }
-            );
+            ]);
             setStep(2);
             await registerTxn.wait();
 

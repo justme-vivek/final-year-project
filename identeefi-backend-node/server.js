@@ -214,7 +214,8 @@ app.delete('/profile/:username', requireRole('admin'), async (req, res) => {
 // Images never touch this server's disk. The browser sends the file here, the server pins it to IPFS
 // with the Pinata JWT (kept in this server's env, never sent to the browser) and returns the gateway URL.
 const PINATA_JWT = process.env.PINATA_JWT || '';
-const IPFS_GATEWAY = (process.env.IPFS_GATEWAY || 'https://gateway.pinata.cloud').replace(/\/$/, '');
+const gatewayRaw = (process.env.IPFS_GATEWAY || 'https://gateway.pinata.cloud').trim().replace(/\/$/, '');
+const IPFS_GATEWAY = /^https?:\/\//i.test(gatewayRaw) ? gatewayRaw : `https://${gatewayRaw}`; // add https:// if it was left out
 const ALLOWED_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 const pinLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many uploads. Try again later.' } });
