@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import abi from '../../utils/Identeefi.json';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import Web3 from "web3";
+import { readContract } from '../../utils/chain';
 import Logo from '../shared/Logo';
 import Avatar from '../shared/Avatar';
 import Verdict from '../shared/Verdict';
@@ -99,9 +99,7 @@ const Product = () => {
 
         // 2) Fetch blockchain history via public RPC (read-only, no wallet needed)
         try {
-            const publicWeb3 = new Web3(SEPOLIA_RPC);
-            const productContract = new publicWeb3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-            const product = await productContract.methods.getProduct(serial.toString()).call();
+            const product = await readContract().getProduct(serial.toString());
             // If server didn't have data, use blockchain data for name/brand/desc/image
             chainOk = !!product[1];
             if (!serverDataLoaded) {

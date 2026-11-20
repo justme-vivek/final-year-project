@@ -23,8 +23,6 @@ const AuthenticProduct = lazy(() => import('./components/pages/AuthenticProduct'
 const FakeProduct = lazy(() => import('./components/pages/FakeProduct'));
 const UpdateProductDetails = lazy(() => import('./components/pages/UpdateProductDetails'));
 const ProductsPage = lazy(() => import('./components/pages/ProductsPage'));
-const WalletButtons = lazy(() => import('./components/WalletButtons/index'));
-const WalletTest = lazy(() => import('./components/pages/WalletConnect'));
 
 const RouteLoader = () => (
   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
@@ -47,9 +45,6 @@ function App() {
         <Route exact path='/product' element={< Product />}></Route>
         <Route exact path='/authentic-product' element={< AuthenticProduct />}></Route>
         <Route exact path='/fake-product' element={< FakeProduct />}></Route>
-        {/* test */}
-        <Route exact path='/walletbuttons' element={< WalletButtons />}></Route>{/**useAccount path */}
-        <Route exact path='/wallettest' element={< WalletTest/>}></Route>
 
         
         {/* private routes */}

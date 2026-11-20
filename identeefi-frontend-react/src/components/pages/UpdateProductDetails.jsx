@@ -1,7 +1,7 @@
 import { API_BASE, CONTRACT_ADDRESS, GOOGLE_MAPS_KEY, SEPOLIA_RPC } from '../../config';
 import { useEffect, useState } from 'react';
 import useAuth from '../../hooks/useAuth';
-import Web3 from "web3";
+import { readContract, writeContract } from '../../utils/chain';
 import axios from 'axios';
 import Geocode from "react-geocode";
 import dayjs from 'dayjs';
@@ -91,9 +91,7 @@ const UpdateProductDetails = () => {
     const loadHistory = async (data) => {
         try {
             const serial = data.includes(",") ? data.split(",")[1]?.trim() : data.trim();
-            const w3 = new Web3(SEPOLIA_RPC);
-            const c = new w3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-            const product = await c.methods.getProduct(serial).call();
+            const product = await readContract().getProduct(serial);
             setHistory(parseHistory(product[5] || []).hist);
         } catch (err) {
             console.warn('Could not load history', err?.message);
@@ -147,11 +145,10 @@ const UpdateProductDetails = () => {
                 console.warn("Please switch MetaMask to Sepolia network:", switchError);
             }
 
-            const web3 = new Web3(window.ethereum);
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const account = accounts[0];
 
-            const productContract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            const productContract = writeContract();
 
             const finalName = currName || auth?.user || "Retail Store";
             const finalLocation = currLocation || dbLocation || "Retail Store, Kuala Lumpur, Malaysia";
@@ -164,13 +161,16 @@ const UpdateProductDetails = () => {
             }
 
             setStep(1);
-            const registerTxn = await productContract.methods.addProductHistory(
+            const registerTxn = await productContract.addProductHistory(
                 cleanSerial,
                 finalName,
                 finalLocation,
                 finalDate,
-                isSold
-            ).send({ from: account, gas: 500000 });
+                isSold,
+                { gasLimit: 500000 }
+            );
+            setStep(2);
+            await registerTxn.wait();
 
             setStep(3);
             setLoading("Check-in recorded.");

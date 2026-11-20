@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { ConnectionType } from '../../../connection'
+type ConnectionType = string
 interface WalletState {
   selectedWallet: ConnectionType
   txInProgress: boolean
@@ -7,7 +7,7 @@ interface WalletState {
 }
 
 const initialState: WalletState = {
-  selectedWallet: ConnectionType.INJECTED,
+  selectedWallet: 'INJECTED',
   txInProgress: false,
   availableContracts: null,
 }

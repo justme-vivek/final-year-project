@@ -4,7 +4,7 @@ import abi from '../../utils/Identeefi.json';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import useAuth from '../../hooks/useAuth';
-import Web3 from "web3";
+import { readContract } from '../../utils/chain';
 import Avatar from '../shared/Avatar';
 import JourneyLog from '../shared/JourneyLog';
 import { PageWrap, PageHead, Card, Row, Notice, btnPrimary, btnGhost, parseHistory, toEntries } from './productUi';
@@ -91,9 +91,7 @@ const UpdateProduct = () => {
 
         // 2) Try fetching from blockchain (for history data)
         try {
-            const publicWeb3 = new Web3(SEPOLIA_RPC);
-            const productContract = new publicWeb3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-            const product = await productContract.methods.getProduct(serial.toString()).call();
+            const product = await readContract().getProduct(serial.toString());
             // If server didn't have data, use blockchain data for name/brand/desc/image
             if (!serverDataLoaded) {
                 const prodName = product[1] || "";

@@ -10,8 +10,6 @@ import { store } from './redux/configureStore'
 import { config } from './components/wagmi/config'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import Router from './components/Router'
-import NetworkCheck from './components/pages/NetworkCheck'
 const root = ReactDOM.createRoot(document.getElementById('root'))
 const queryClient = new QueryClient()
 

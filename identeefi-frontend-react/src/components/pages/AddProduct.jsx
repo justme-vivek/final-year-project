@@ -1,6 +1,6 @@
 import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL, GOOGLE_MAPS_KEY } from '../../config';
 import { useEffect, useState } from 'react';
-import Web3 from 'web3';
+import { writeContract, readContract } from '../../utils/chain';
 import axios from 'axios';
 import abi from '../../utils/Identeefi.json';
 import QRCode from 'qrcode.react';
@@ -202,9 +202,6 @@ const AddProduct = () => {
             setStep(0);
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             const fromAccount = accounts[0];
-            // Initialize Web3 with MetaMask provider
-            const web3 = new Web3(window.ethereum);
-            const productContract = new web3.eth.Contract(contractABI, CONTRACT_ADDRESS);
 
             // Upload image to IPFS (optional — skipped if no API key)
             setLoading("Uploading image to IPFS...");
@@ -235,36 +232,27 @@ const AddProduct = () => {
                 console.warn("Please switch MetaMask to Sepolia network:", switchError);
             }
 
-            const receipt = await new Promise((resolve, reject) => {
-                let txHash = '';
-                productContract.methods
-                    .registerProduct(
-                        name,
-                        brand,
-                        snapshotSerialNumber,
-                        description.replace(/,/g, ';'),
-                        imageUrl || '',
-                        manuName,
-                        manuLocation || dbLocation || "Manufacturer Location, Unknown",
-                        manuDate.toString()
-                    )
-                    .send({ from: fromAccount, gas: 800000 })
-                    .on('transactionHash', (hash) => {
-                        txHash = hash;
-                        setStep(2);
-                    })
-                    .on('receipt', (receipt) => {
-                        resolve(receipt);
-                    })
-                    .on('error', (error, receipt) => {
-                        if (error?.message?.includes('Failed to check for transaction receipt') && txHash) {
-                            console.warn("Receipt polling failed, but transaction was broadcast:", txHash);
-                            resolve({ transactionHash: txHash });
-                        } else {
-                            reject(error);
-                        }
-                    });
-            });
+            const productContract = writeContract();
+            const tx = await productContract.registerProduct(
+                name,
+                brand,
+                snapshotSerialNumber,
+                description.replace(/,/g, ';'),
+                imageUrl || '',
+                manuName,
+                manuLocation || dbLocation || "Manufacturer Location, Unknown",
+                manuDate.toString(),
+                { gasLimit: 800000 }
+            );
+            setStep(2);
+            let receipt = { transactionHash: tx.hash };
+            try {
+                receipt = await tx.wait();
+            } catch (waitErr) {
+                // If the receipt check fails after the transaction was broadcast, keep going with its hash.
+                if (waitErr?.code === 'CALL_EXCEPTION' || waitErr?.receipt?.status === 0) throw waitErr;
+                console.warn("Receipt polling failed, but transaction was broadcast:", tx.hash);
+            }
 
             setLoading(receipt.transactionHash);
             setTxHash(receipt.transactionHash);
@@ -290,9 +278,7 @@ const AddProduct = () => {
             generateQRCode(snapshotSerialNumber);
 
             // Read back the registered product from blockchain
-            const product = await productContract.methods
-                .getProduct(snapshotSerialNumber)
-                .call();
+            await readContract().getProduct(snapshotSerialNumber);
             setStep(4);
             setDone(true);
         } catch (error) {

@@ -5,7 +5,6 @@ import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { WagmiProvider, useAccount } from 'wagmi'
 import { arbitrum, mainnet, polygon, sepolia,bscTestnet } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import Router from '../../components/Router'
 import { useEffect,useRef} from 'react'
 import { Provider } from 'react-redux'
 // 0. Setup queryClient
