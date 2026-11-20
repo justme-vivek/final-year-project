@@ -1,4 +1,4 @@
-import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL, GOOGLE_MAPS_KEY } from '../../config';
+import { API_BASE, CONTRACT_ADDRESS, EXPLORER_URL } from '../../config';
 import { useEffect, useState } from 'react';
 import { writeContract, readContract, sendWithGas } from '../../utils/chain';
 import axios from 'axios';
@@ -9,7 +9,6 @@ import QrModal from '../shared/QrModal';
 import dayjs from 'dayjs';
 import useAuth from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { getPosition, reverseGeocode } from '../../utils/geo';
 import WalletConnect from './WalletConnect';
 import PhotoUploader from '../shared/PhotoUploader';
 import TxProgress from '../shared/TxProgress';
@@ -66,8 +65,6 @@ const AddProduct = () => {
     const [qrData, setQrData] = useState('');
     const [qrOpen, setQrOpen] = useState(false);
     const [manuDate, setManuDate] = useState('');
-    const [manuLatitude, setManuLatitude] = useState("");
-    const [manuLongtitude, setManuLongtitude] = useState("");
     const [manuName, setManuName] = useState("");
     const [loading, setLoading] = useState("");
     const [manuLocation, setManuLocation] = useState("");
@@ -97,16 +94,6 @@ const AddProduct = () => {
         getCurrentTimeLocation();
     }, []);
 
-    const locateMe = async () => {
-        try {
-            const { lat, lng } = await getPosition();
-            setManuLatitude(lat); setManuLongtitude(lng);
-            const { address } = await reverseGeocode(lat, lng);
-            setManuLocation(address.replace(/,/g, ';'));
-        } catch (e) {
-            console.warn('Location not available:', e.message);
-        }
-    };
 
     const generateQRCode = async (serialNumber) => {
         const data = CONTRACT_ADDRESS + ',' + serialNumber
@@ -149,6 +136,7 @@ const AddProduct = () => {
             if (res.data && res.data.length > 0) {
                 setManuName(res.data[0].name || "");
                 setDbLocation(res.data[0].location || "");
+                setManuLocation((res.data[0].location || "").replace(/,/g, ";"));
             }
         } catch (err) {
             console.error("Error loading manufacturer profile details:", err);
@@ -270,7 +258,6 @@ const AddProduct = () => {
 
     const getCurrentTimeLocation = () => {
         setManuDate(dayjs().unix())
-        locateMe();
     }
 
     // Save full product data to MongoDB
@@ -343,6 +330,9 @@ const AddProduct = () => {
                     </Field>
                     <Field label="Brand" id="product-brand">
                         <input id="product-brand" required style={inputStyle} value={brand} onChange={(e) => setBrand(e.target.value)} />
+                    </Field>
+                    <Field label="Manufacturing location" id="product-location" hint="Where the product is made. Shorter text costs less to record.">
+                        <input id="product-location" style={inputStyle} value={manuLocation.replace(/;/g, ",")} onChange={(e) => setManuLocation(e.target.value.replace(/,/g, ";"))} placeholder="City, country" maxLength={80} />
                     </Field>
                     <Field label="Description" id="product-description">
                         <textarea id="product-description" rows={3} style={{ ...inputStyle, padding: 12, resize: 'vertical' }} value={description} onChange={(e) => setDescription(e.target.value)} />

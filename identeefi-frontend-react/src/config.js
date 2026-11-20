@@ -6,5 +6,4 @@ export const API_BASE = (env.VITE_API_URL || 'https://final-year-project-133i.on
 export const CONTRACT_ADDRESS = env.VITE_CONTRACT_ADDRESS || '';
 export const SEPOLIA_RPC = env.VITE_SEPOLIA_RPC || 'https://ethereum-sepolia-rpc.publicnode.com';
 export const EXPLORER_URL = 'https://sepolia.etherscan.io';
-export const GOOGLE_MAPS_KEY = env.VITE_GOOGLE_MAPS_KEY || '';
 export const WALLETCONNECT_PROJECT_ID = env.VITE_WALLETCONNECT_PROJECT_ID || '';

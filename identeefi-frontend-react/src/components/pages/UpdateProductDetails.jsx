@@ -1,9 +1,8 @@
-import { API_BASE, CONTRACT_ADDRESS, GOOGLE_MAPS_KEY, SEPOLIA_RPC } from '../../config';
+import { API_BASE, CONTRACT_ADDRESS, SEPOLIA_RPC } from '../../config';
 import { useEffect, useState } from 'react';
 import useAuth from '../../hooks/useAuth';
 import { readContract, writeContract, sendWithGas } from '../../utils/chain';
 import axios from 'axios';
-import { getPosition, reverseGeocode } from '../../utils/geo';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import abi from '../../utils/Identeefi.json';
@@ -17,8 +16,6 @@ const UpdateProductDetails = () => {
 
     const [currentAccount, setCurrentAccount] = useState("");
     const [currDate, setCurrDate] = useState('');
-    const [currLatitude, setCurrLatitude] = useState("");
-    const [currLongtitude, setCurrLongtitude] = useState("");
     const [currName, setCurrName] = useState("");
     const [currLocation, setCurrLocation] = useState("");
     const [dbLocation, setDbLocation] = useState("");
@@ -56,19 +53,6 @@ const UpdateProductDetails = () => {
     }, []);
 
 
-    const [locStatus, setLocStatus] = useState('');
-    const locateMe = async () => {
-        setLocStatus('Finding your location…');
-        try {
-            const { lat, lng } = await getPosition();
-            setCurrLatitude(lat); setCurrLongtitude(lng);
-            const { address, source } = await reverseGeocode(lat, lng);
-            setCurrLocation(address.replace(/,/g, ';'));
-            setLocStatus(source === 'coordinates' ? 'Could not find the address, so the coordinates were filled in. You can edit the text.' : '');
-        } catch (e) {
-            setLocStatus(e.message);
-        }
-    };
 
     const loadHistory = async (data) => {
         try {
@@ -88,7 +72,6 @@ const UpdateProductDetails = () => {
 
     const getCurrentTimeLocation = () => {
         setCurrDate(dayjs().unix())
-        locateMe();
     }
 
        
@@ -192,12 +175,8 @@ const UpdateProductDetails = () => {
                     <Field label="Your store or company name" id="curr-name">
                         <input id="curr-name" style={inputStyle} value={currName} onChange={(e) => setCurrName(e.target.value)} placeholder="Store or company name" />
                     </Field>
-                    <Field label="Location" id="curr-loc" hint="Filled in from your device location when available.">
-                        <textarea id="curr-loc" rows={2} style={{ ...inputStyle, padding: 12, resize: 'vertical' }} value={currLocation.replace(/;/g, ",")} onChange={(e) => setCurrLocation(e.target.value)} placeholder="Address" />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
-                            <button type="button" onClick={locateMe} style={{ minHeight: 44, padding: '0 16px', borderRadius: 10, border: `1px solid ${colors.border}`, background: 'transparent', color: colors.textPrimary, fontFamily: 'inherit', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Use my location</button>
-                            {locStatus && <span role="status" style={{ fontSize: 13, color: colors.textSecondary }}>{locStatus}</span>}
-                        </div>
+                    <Field label="Location" id="curr-loc">
+                        <textarea id="curr-loc" rows={2} style={{ ...inputStyle, padding: 12, resize: 'vertical' }} value={currLocation.replace(/;/g, ",")} onChange={(e) => setCurrLocation(e.target.value.replace(/,/g, ";"))} placeholder="Store address, city, country" />
                     </Field>
                     {auth.role !== 'supplier' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

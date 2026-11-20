@@ -14,8 +14,6 @@ import { colors } from '../../theme/tokens';
 const UpdateProduct = () => {
     const [currentAccount, setCurrentAccount] = useState("");
     const [suppDate, setSuppDate] = useState('');
-    const [suppLatitude, setSuppLatitude] = useState("");
-    const [suppLongtitude, setSuppLongtitude] = useState("");
     const [suppName, setSuppName] = useState("");
     const [suppLocation, setSuppLocation] = useState("");
     const [loading, setLoading] = useState("");
