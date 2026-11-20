@@ -5,7 +5,7 @@ import useAuth from '../../hooks/useAuth';
 import Logo from '../shared/Logo';
 import './public.css';
 
-const LOGIN_URL = '/auth';
+const LOGIN_URL = '/login';
 
 const STATIONS = [
   { name: 'Manufacturer', note: 'Registers batches and creates QR codes', role: 'manufacturer' },
@@ -33,26 +33,27 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await axios.post(`${LOGIN_URL}/${user}/${pwd}`, { headers: { 'Content-Type': 'application/json' } });
-      if (!res?.data || res.data.length === 0) {
+      const res = await axios.post(LOGIN_URL, { username: user.trim(), password: pwd });
+      if (!res?.data?.token) {
         setErrMsg('We could not sign you in. Check your details and try again.');
       } else {
-        const role = res.data[0].role;
+        const role = res.data.role;
+        const token = res.data.token;
         let image = '';
         try {
-          const p = await axios.get(`/profile/${user}`);
+          const p = await axios.get(`/profile/${res.data.username}`);
           image = p?.data?.[0]?.image || '';
         } catch (e2) { /* avatar falls back to initials */ }
         setSignedRole(role);
-        setAuth({ user, pwd, role, image });
+        setAuth({ user: res.data.username, role, image, token });
         setUser('');
         setPwd('');
         navigate(`/${role}`, { replace: true });
       }
     } catch (err) {
       if (!err?.response) setErrMsg('The server is not responding. Try again in a moment.');
-      else if (err.response?.status === 400) setErrMsg('The username or password is wrong.');
-      else if (err.response?.status === 401) setErrMsg('This account is not allowed to sign in.');
+      else if (err.response?.status === 400 || err.response?.status === 401) setErrMsg(err.response?.data?.error || 'The username or password is wrong.');
+      else if (err.response?.status === 429) setErrMsg(err.response?.data?.error || 'Too many attempts. Try again later.');
       else setErrMsg('We could not sign you in. Try again in a moment.');
     } finally {
       setIsLoading(false);

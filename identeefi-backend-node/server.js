@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -34,73 +35,65 @@ mongoose.connect(MONGO_URI)
 
 const saltRounds = 10;
 
-// Get all auth records
-app.get('/authAll', async (req, res) => {
-    try {
-        const data = await Auth.find({});
-        const formatted = data.map(d => ({
-            id: d._id,
-            username: d.username,
-            password: d.password,
-            role: d.role
-        }));
-        res.header('Access-Control-Allow-Credentials', true);
-        res.send(formatted);
-    } catch (err) {
-        console.error("Error fetching auth data:", err);
-        res.status(500).send('Internal Server Error');
-    }
-});
+const JWT_SECRET = process.env.JWT_SECRET || '';
+if (JWT_SECRET.length < 32) {
+    console.error('JWT_SECRET is missing or too short (use at least 32 characters). Generate one with: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"');
+    process.exit(1);
+}
+const ROLES = ['admin', 'manufacturer', 'supplier', 'retailer'];
+// Compared against when the username does not exist, so a wrong username and a wrong password take the same time.
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', saltRounds);
 
-// Login
-app.post('/auth/:username/:password', async (req, res) => {
-    const { username, password } = req.params;
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false, skipSuccessfulRequests: true, message: { error: 'Too many failed sign-in attempts. Try again in 15 minutes.' } });
+
+const requireAuth = (req, res, next) => {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
     try {
-        const user = await Auth.findOne({ username: username });
-        if (user) {
-            const passwordMatch = await bcrypt.compare(password, user.password);
-            if (passwordMatch) {
-                // Return in array format to match original API response
-                res.status(200).send([{
-                    username: user.username,
-                    password: user.password,
-                    role: user.role,
-                    id: user._id
-                }]);
-            } else {
-                res.status(401).send('Invalid password');
-            }
-        } else {
-            res.status(404).send('User not found');
-        }
+        req.user = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch (e) {
+        res.status(401).send({ error: 'Please sign in again.' });
+    }
+};
+const requireRole = (...roles) => [requireAuth, (req, res, next) => (roles.includes(req.user.role) ? next() : res.status(403).send({ error: 'You do not have access to this.' }))];
+
+// Login. Body: { username, password }. Returns { token, username, role }. The password is never put in the URL or sent back.
+app.post('/login', loginLimiter, async (req, res) => {
+    try {
+        const username = typeof req.body?.username === 'string' ? req.body.username.trim() : '';
+        const password = typeof req.body?.password === 'string' ? req.body.password : '';
+        if (!username || !password || username.length > 50 || password.length > 200) return res.status(400).send({ error: 'Enter your username and password.' });
+        const user = await Auth.findOne({ username: { $eq: username } });
+        const ok = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
+        if (!user || !ok) return res.status(401).send({ error: 'The username or password is wrong.' });
+        const token = jwt.sign({ username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+        res.send({ token, username: user.username, role: user.role });
     } catch (error) {
-        console.error("Error fetching user data:", error);
-        res.status(500).send('Internal Server Error');
+        console.error('Login error:', error.message);
+        res.status(500).send({ error: 'Internal Server Error' });
     }
 });
 
-// Create account
-app.post('/addaccount', async (req, res) => {
+// Removed: the old routes returned password hashes and took the password in the URL.
+const removedRoute = (req, res) => res.status(410).send({ error: 'This route was removed.' });
+app.get('/authAll', removedRoute);
+app.post('/auth/:username/:password', removedRoute);
+app.post('/changepsw', removedRoute);
+
+// Create account (admin only)
+app.post('/addaccount', requireRole('admin'), async (req, res) => {
     try {
-        const { username, password, role } = req.body;
+        const { username, password, role } = req.body || {};
+        if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || username.length > 50) return res.status(400).send({ error: 'Enter a username.' });
+        if (password.length < 8 || password.length > 200) return res.status(400).send({ error: 'The password needs at least 8 characters.' });
+        if (!ROLES.includes(role)) return res.status(400).send({ error: 'Choose a valid role.' });
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        await Auth.create({ username, password: hashedPassword, role });
+        await Auth.create({ username: username.trim(), password: hashedPassword, role });
         res.send('Data inserted');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error creating account');
-    }
-});
-
-// Change password
-app.post('/changepsw', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        await Auth.updateOne({ username: username }, { password: password });
-        res.send('Data updated');
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Error updating password');
     }
 });
 
@@ -151,7 +144,7 @@ app.get('/profile/:username', async (req, res) => {
 });
 
 // Create profile
-app.post('/addprofile', async (req, res) => {
+app.post('/addprofile', requireRole('admin'), async (req, res) => {
     try {
         const { username, name, description, website, location, image, role } = req.body;
         await Profile.create({ username, name, description, website, location, image, role });
@@ -163,10 +156,11 @@ app.post('/addprofile', async (req, res) => {
 });
 
 // Update profile role
-app.put('/profile/:username/role', async (req, res) => {
+app.put('/profile/:username/role', requireRole('admin'), async (req, res) => {
     try {
         const { username } = req.params;
         const { role } = req.body;
+        if (!ROLES.includes(role)) return res.status(400).send({ error: 'Choose a valid role.' });
         await Profile.updateOne({ username }, { role });
         await Auth.updateOne({ username }, { role }); // Keep auth role in sync
         res.send('Role updated successfully');
@@ -177,7 +171,7 @@ app.put('/profile/:username/role', async (req, res) => {
 });
 
 // Update full profile (used by edit user form)
-app.put('/profile/:username', async (req, res) => {
+app.put('/profile/:username', requireRole('admin'), async (req, res) => {
     try {
         const { username } = req.params;
         const { name, description, website, location, image, role, password } = req.body;
@@ -202,7 +196,7 @@ app.put('/profile/:username', async (req, res) => {
 });
 
 // Delete profile and account
-app.delete('/profile/:username', async (req, res) => {
+app.delete('/profile/:username', requireRole('admin'), async (req, res) => {
     try {
         const { username } = req.params;
         await Profile.deleteOne({ username });
@@ -241,7 +235,7 @@ const pinToPinata = async (buffer, filename, contentType) => {
 };
 
 // Upload a photo (product or profile). Field name: image. Returns { url }.
-app.post('/pin/image', pinLimiter, (req, res) => {
+app.post('/pin/image', requireRole('admin', 'manufacturer'), pinLimiter, (req, res) => {
     memUpload.single('image')(req, res, async (err) => {
         if (err) return res.status(400).send({ error: err.message });
         if (!req.file) return res.status(400).send({ error: 'Please select an image to upload.' });
@@ -256,7 +250,7 @@ app.post('/pin/image', pinLimiter, (req, res) => {
 });
 
 // Upload product metadata JSON (max 20 KB). Returns { url }.
-app.post('/pin/json', pinLimiter, async (req, res) => {
+app.post('/pin/json', requireRole('admin', 'manufacturer'), pinLimiter, async (req, res) => {
     try {
         const body = JSON.stringify(req.body || {});
         if (!req.body || typeof req.body !== 'object' || body.length > 20000) return res.status(400).send({ error: 'Invalid metadata.' });
@@ -321,13 +315,13 @@ app.get('/product/:serialNumber', async (req, res) => {
 });
 
 // Add product (full data)
-app.post('/addproduct', async (req, res) => {
+app.post('/addproduct', requireRole('manufacturer'), async (req, res) => {
     try {
         const {
             serialNumber, name, brand, description,
             image, imageUrl, metadataUrl,
             manuName, manuLocation, manuDate,
-            txHash, registeredBy
+            txHash
         } = req.body;
         await Product.create({
             serialNumber, name, brand, description,
@@ -338,7 +332,7 @@ app.post('/addproduct', async (req, res) => {
             manuLocation: manuLocation || '',
             manuDate: manuDate || '',
             txHash: txHash || '',
-            registeredBy: registeredBy || ''
+            registeredBy: req.user.username
         });
         res.send('Data inserted');
     } catch (err) {
