@@ -9,7 +9,7 @@ import QrModal from '../shared/QrModal';
 import dayjs from 'dayjs';
 import useAuth from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import Geocode from "react-geocode";
+import { getPosition, reverseGeocode } from '../../utils/geo';
 import WalletConnect from './WalletConnect';
 import PhotoUploader from '../shared/PhotoUploader';
 import TxProgress from '../shared/TxProgress';
@@ -97,36 +97,16 @@ const AddProduct = () => {
         getCurrentTimeLocation();
     }, []);
 
-    useEffect(() => {
-        Geocode.setApiKey(GOOGLE_MAPS_KEY)
-
-        Geocode.fromLatLng(manuLatitude, manuLongtitude).then(
-            (response) => {
-                const address = response.results[0].formatted_address;
-                let city, state, country;
-                for (let i = 0; i < response.results[0].address_components.length; i++) {
-                    for (let j = 0; j < response.results[0].address_components[i].types.length; j++) {
-                        switch (response.results[0].address_components[i].types[j]) {
-                            case "locality":
-                                city = response.results[0].address_components[i].long_name;
-                                break;
-                            case "administrative_area_level_1":
-                                state = response.results[0].address_components[i].long_name;
-                                break;
-                            case "country":
-                                country = response.results[0].address_components[i].long_name;
-                                break;
-                        }
-                    }
-                }
-                setManuLocation(address.replace(/,/g, ';'));
-            },
-            (error) => {
-                console.error(error);
-            }
-        );
-
-    }, [manuLatitude, manuLongtitude]);
+    const locateMe = async () => {
+        try {
+            const { lat, lng } = await getPosition();
+            setManuLatitude(lat); setManuLongtitude(lng);
+            const { address } = await reverseGeocode(lat, lng);
+            setManuLocation(address.replace(/,/g, ';'));
+        } catch (e) {
+            console.warn('Location not available:', e.message);
+        }
+    };
 
     const generateQRCode = async (serialNumber) => {
         const data = CONTRACT_ADDRESS + ',' + serialNumber
@@ -290,10 +270,7 @@ const AddProduct = () => {
 
     const getCurrentTimeLocation = () => {
         setManuDate(dayjs().unix())
-        navigator.geolocation.getCurrentPosition(function (position) {
-            setManuLatitude(position.coords.latitude);
-            setManuLongtitude(position.coords.longitude);
-        });
+        locateMe();
     }
 
     // Save full product data to MongoDB
